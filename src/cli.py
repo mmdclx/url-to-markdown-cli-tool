@@ -26,6 +26,7 @@ async def run(args: argparse.Namespace) -> None:
         keep_webpage_links=not args.no_links,
         remove_gif_image=args.no_gif_images,
         remove_svg_image=args.no_svg_images,
+        remove_tags=args.remove_tags or [],
     )
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
@@ -73,6 +74,12 @@ def main() -> None:
         "--no-svg-images",
         action="store_true",
         help="Remove SVG images from the output",
+    )
+    parser.add_argument(
+        "--remove-tags",
+        nargs="*",
+        metavar="TAG",
+        help="Remove specific HTML tags from the output (e.g., --remove-tags div span script)",
     )
     args = parser.parse_args()
     asyncio.run(run(args))
