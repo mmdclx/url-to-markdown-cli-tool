@@ -21,6 +21,9 @@ pip install --upgrade pyinstaller
 # Build the binary
 pyinstaller --onefile src/cli.py -n url-to-llm-friendly-md
 
+# Clean up intermediate build files
+rm -rf build/
+
 # Get original binary size
 ORIGINAL_SIZE=$(du -h dist/url-to-llm-friendly-md | cut -f1)
 
