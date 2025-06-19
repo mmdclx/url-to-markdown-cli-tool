@@ -1,3 +1,10 @@
+#!/bin/bash
+set -euo pipefail
+
+python -m pip install --upgrade pip
+pip install git+https://github.com/m92vyas/llm-reader
+pip install .
+=======
 #!/usr/bin/env bash
 set -e
 
@@ -22,5 +29,3 @@ if [ -f requirements.txt ]; then
 fi
 
 printf '\nSetup complete. Activate the virtual environment with: source venv/bin/activate\n'
-
-
