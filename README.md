@@ -10,12 +10,7 @@ Activate the environment with:
 source venv/bin/activate
 ```
 
-
 ## Build
-Run `./build.sh` to create a standalone binary using PyInstaller. The script reuses the virtual environment created by `install.sh` or creates one if needed.
+Run `./build.sh` to create the `build/url-to-llm-friendly-md` binary.
 
-The resulting executable is placed in the `build/` directory. Execute it with:
-
-```bash
-./build/url-to-llm-friendly-md
-```
+You may copy this binary anywhere you like or run it directly from the `build/` directory.
