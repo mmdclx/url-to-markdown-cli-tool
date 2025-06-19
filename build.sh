@@ -23,6 +23,23 @@ pyinstaller --onefile src/cli.py -n url-to-llm-friendly-md
 
 # Move binary to build directory
 mkdir -p build
-mv -f dist/url-to-llm-friendly-md build/
+rm -rf build/url-to-llm-friendly-md
+mv dist/url-to-llm-friendly-md build/
 
-printf '\nBinary available at build/url-to-llm-friendly-md\n'
+# Get original binary size
+ORIGINAL_SIZE=$(du -h build/url-to-llm-friendly-md | cut -f1)
+
+# Optional UPX compression for smaller binaries
+if command -v upx >/dev/null 2>&1; then
+  echo "UPX found - attempting to compress binary..."
+  if upx --best build/url-to-llm-friendly-md 2>/dev/null; then
+    COMPRESSED_SIZE=$(du -h build/url-to-llm-friendly-md | cut -f1)
+    printf '\nBinary compressed: %s -> %s\n' "$ORIGINAL_SIZE" "$COMPRESSED_SIZE"
+  else
+    printf '\nBinary available at build/url-to-llm-friendly-md (%s)\n' "$ORIGINAL_SIZE"
+    printf 'Note: UPX compression failed (common on macOS) - binary still works\n'
+  fi
+else
+  printf '\nBinary available at build/url-to-llm-friendly-md (%s)\n' "$ORIGINAL_SIZE"
+  printf 'Tip: Install UPX for smaller binaries on Linux/Windows: brew install upx\n'
+fi
