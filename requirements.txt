@@ -1,0 +1,3 @@
+# Add your project's dependencies here
+# Example dependency from GitHub
+# git+https://github.com/m92vyas/llm-reader.git
