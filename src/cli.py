@@ -24,6 +24,8 @@ async def run(args: argparse.Namespace) -> None:
         args.url,
         keep_images=not args.no_images,
         keep_webpage_links=not args.no_links,
+        remove_gif_image=args.no_gif_images,
+        remove_svg_image=args.no_svg_images,
     )
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
@@ -61,6 +63,16 @@ def main() -> None:
         "--no-links",
         action="store_true",
         help="Remove webpage links from the output",
+    )
+    parser.add_argument(
+        "--no-gif-images",
+        action="store_true",
+        help="Remove GIF images from the output",
+    )
+    parser.add_argument(
+        "--no-svg-images",
+        action="store_true",
+        help="Remove SVG images from the output",
     )
     args = parser.parse_args()
     asyncio.run(run(args))
