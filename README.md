@@ -1,27 +1,29 @@
-# url-to-llm-friendly-markdown
-
 This repository provides a simple command line interface that wraps the
 [m92vyas/llm-reader](https://github.com/m92vyas/llm-reader) library.  
 Use it to fetch a webpage and output the processed, LLM-friendly markdown.
 
-## Installation
+## Setup
+Run `./install.sh` to create a `venv` directory and install dependencies.
 
-Run the bundled script to install this project and its dependency
-[`llm-reader`](https://github.com/m92vyas/llm-reader):
+Activate the environment with:
 
 ```bash
-./install.sh
+source venv/bin/activate
 ```
 
-This will install a `url-to-llm` command on your system.
+## Build
+Run `./build.sh` to create the `build/url-to-llm-friendly-md` binary.
 
-The CLI relies on Google Chrome and the matching ChromeDriver binary. Make sure
-both are installed and on your `PATH` before running.
+You may copy this binary anywhere you like or run it directly from the `build/` directory.
 
 ## Usage
 
 ```bash
-url-to-llm https://example.com -o page.md
+url-to-llm-friendly-md https://example.com -o page.md
 ```
 
-Run `url-to-llm --help` for available options.
+Run `url-to-llm-friendly-md --help` for available options.
+
+## Dependencies
+The CLI relies on Google Chrome and the matching ChromeDriver binary. Make sure
+both are installed and on your `PATH` before running.
