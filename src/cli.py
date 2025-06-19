@@ -1,7 +1,7 @@
 import argparse
 import asyncio
-from url_to_llm_text.get_html_text import get_page_source
-from url_to_llm_text.get_llm_input_text import get_processed_text
+from page_fetcher import get_page_source
+from markdown_processor import get_processed_markdown
 
 async def run(args: argparse.Namespace) -> None:
     try:
@@ -19,7 +19,7 @@ async def run(args: argparse.Namespace) -> None:
         raise SystemExit(
             "Failed to fetch the page. Ensure Chrome and ChromeDriver are installed."
         )
-    processed = await get_processed_text(
+    processed = await get_processed_markdown(
         page_source,
         args.url,
         keep_images=not args.no_images,
