@@ -10,3 +10,8 @@ Activate the environment with:
 source venv/bin/activate
 ```
 
+## Build
+Run `./build.sh` to create the `build/url-to-llm-friendly-md` binary.
+
+You may copy this binary anywhere you like or run it directly from the `build/` directory.
+
