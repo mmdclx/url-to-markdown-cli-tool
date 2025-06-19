@@ -16,6 +16,18 @@ Run `./build.sh` to create the `build/url-to-llm-friendly-md` binary.
 
 You may copy this binary anywhere you like or run it directly from the `build/` directory.
 
+### Binary Size Optimization
+The binary is approximately 22MB due to bundled dependencies (Selenium, Chrome automation, HTML parsing libraries). For smaller binaries on Linux/Windows systems, install UPX:
+
+```bash
+# Linux/Windows (UPX compression works)
+brew install upx  # or apt-get install upx on Ubuntu
+./build.sh  # Will automatically compress if UPX is available
+
+# macOS (UPX compression currently unsupported)
+./build.sh  # Build succeeds, UPX compression is skipped
+```
+
 ## Usage
 
 ```bash
