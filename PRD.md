@@ -178,7 +178,7 @@ Options:
 ## 6. Future Enhancements
 
 ### 6.1 Planned Features
-- Convert entire codebase to javascript, have the cli installable as a npm package.
+- Convert entire codebase to javascript, have the cli installable as a npm package. Use claude-task-master to do this.
 
 ### 6.2 Integration Opportunities
 - Docker containerisation for CI/CD pipelines
