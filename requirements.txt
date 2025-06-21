@@ -1,1 +1,4 @@
-git+https://github.com/m92vyas/llm-reader.git
+selenium
+beautifulsoup4
+html2text
+lxml

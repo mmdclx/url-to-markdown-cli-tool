@@ -19,7 +19,7 @@ python3 -m pip install --upgrade pip
 pip install --upgrade pyinstaller
 
 # Build the binary
-pyinstaller --onefile src/cli.py -n url-to-llm-friendly-md
+pyinstaller --onefile --hidden-import page_fetcher --hidden-import markdown_processor --hidden-import selenium --hidden-import beautifulsoup4 --hidden-import html2text --hidden-import lxml src/cli.py -n url-to-llm-friendly-md
 
 # Clean up intermediate build files
 rm -rf build/

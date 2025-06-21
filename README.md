@@ -1,13 +1,14 @@
 # url-to-llm-friendly-md
 
-A CLI tool that converts web pages into clean, LLM-friendly markdown format. This tool wraps the [m92vyas/llm-reader](https://github.com/m92vyas/llm-reader) library to fetch web content and strip away noise like ads, navigation elements, and unnecessary formatting, leaving you with readable markdown that's perfect for feeding into large language models.
+A CLI tool that converts web pages into clean, LLM-friendly markdown format. Originally inspired by [m92vyas/llm-reader](https://github.com/m92vyas/llm-reader), this tool fetches web content and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's perfect for feeding into large language models.
 
 **Key features:**
-- Convert any webpage to clean markdown
+- Convert any webpage to properly formatted markdown with headers, links, and structure
 - Remove images, links, or specific HTML tags as needed
 - Configurable wait times for dynamic content
 - Headless or visible browser modes
 - Standalone binary with no runtime dependencies
+- Clean output optimized for LLM parsing and understanding
 
 ## Setup
 Run `./install.sh` to create a `venv` directory and install dependencies.
