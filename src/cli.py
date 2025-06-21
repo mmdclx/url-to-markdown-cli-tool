@@ -1,7 +1,36 @@
 import argparse
 import asyncio
-from url_to_llm_text.get_html_text import get_page_source
-from url_to_llm_text.get_llm_input_text import get_processed_text
+import sys
+import os
+
+# Add the src directory to the Python path for imports
+if getattr(sys, 'frozen', False):
+    # Running as compiled binary - use PyInstaller's temp extraction directory
+    bundle_dir = sys._MEIPASS
+    sys.path.insert(0, bundle_dir)
+else:
+    # Running as source
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from page_fetcher import get_page_source
+    from markdown_processor import get_processed_markdown
+except ImportError:
+    # If imports fail, try from current directory
+    import importlib.util
+    import inspect
+    
+    # Load page_fetcher
+    spec = importlib.util.spec_from_file_location("page_fetcher", os.path.join(os.path.dirname(__file__), "page_fetcher.py"))
+    page_fetcher_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(page_fetcher_module)
+    get_page_source = page_fetcher_module.get_page_source
+    
+    # Load markdown_processor
+    spec = importlib.util.spec_from_file_location("markdown_processor", os.path.join(os.path.dirname(__file__), "markdown_processor.py"))
+    markdown_processor_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(markdown_processor_module)
+    get_processed_markdown = markdown_processor_module.get_processed_markdown
 
 async def run(args: argparse.Namespace) -> None:
     try:
@@ -19,7 +48,7 @@ async def run(args: argparse.Namespace) -> None:
         raise SystemExit(
             "Failed to fetch the page. Ensure Chrome and ChromeDriver are installed."
         )
-    processed = await get_processed_text(
+    processed = await get_processed_markdown(
         page_source,
         args.url,
         keep_images=not args.no_images,
