@@ -5,7 +5,6 @@ Originally inspired by m92vyas/llm-reader.
 """
 import asyncio
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 
