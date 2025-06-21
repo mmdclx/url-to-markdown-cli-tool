@@ -1,6 +1,6 @@
 # url-to-llm-friendly-md
 
-A CLI tool that converts web pages into clean, LLM-friendly markdown format. It fetches web content and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's perfect for feeding into large language models.
+A CLI tool that converts web pages into clean, LLM-friendly markdown format. It fetches web content and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's great for feeding into large language models or using in a RAG architecture.
 
 **Key features:**
 - Convert any webpage to properly formatted markdown with headers, links, and structure
