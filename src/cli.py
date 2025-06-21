@@ -35,7 +35,7 @@ def run(args: argparse.Namespace) -> None:
         page_source = get_page_source(
             args.url,
             wait=args.wait,
-            headless=not args.no_headless,
+            headless=not args.show_browser,
         )
     except Exception as e:
         raise SystemExit(
@@ -78,9 +78,16 @@ def main() -> None:
         help="Seconds to wait for the page to load (default: 1.5)",
     )
     parser.add_argument(
+        "--show-browser",
+        action="store_true",
+        help="Show the browser window (visible mode)",
+    )
+    # Backward compatibility - deprecated alias
+    parser.add_argument(
         "--no-headless",
         action="store_true",
-        help="Disable headless browser mode",
+        help=argparse.SUPPRESS,  # Hide from help
+        dest="show_browser",  # Map to same destination
     )
     parser.add_argument(
         "--no-images",
@@ -109,6 +116,11 @@ def main() -> None:
         help="Remove specific HTML tags from the output (e.g., --remove-tags div span script)",
     )
     args = parser.parse_args()
+    
+    # Check if deprecated flag was used
+    if "--no-headless" in sys.argv:
+        print("Warning: --no-headless is deprecated. Use --show-browser instead.", file=sys.stderr)
+    
     run(args)
 
 if __name__ == "__main__":
