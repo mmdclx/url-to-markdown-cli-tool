@@ -6,6 +6,8 @@ Originally inspired by m92vyas/llm-reader.
 import asyncio
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 
 
 async def get_page_source(url: str,
@@ -52,7 +54,14 @@ async def get_page_source(url: str,
         # Create driver and fetch page
         driver = webdriver.Chrome(options=options)
         driver.get(url)
-        driver.implicitly_wait(wait)
+        
+        # Wait for page to be fully loaded (handles dynamic content)
+        try:
+            wait_obj = WebDriverWait(driver, timeout=wait)
+            wait_obj.until(lambda driver: driver.execute_script("return document.readyState") == "complete")
+        except TimeoutException:
+            # Continue anyway if timeout - some content is better than none
+            pass
 
         return driver.page_source
 
