@@ -18,8 +18,8 @@ fi
 python3 -m pip install --upgrade pip
 pip install --upgrade pyinstaller
 
-# Build the binary
-pyinstaller --onefile --hidden-import page_fetcher --hidden-import markdown_processor --hidden-import selenium --hidden-import beautifulsoup4 --hidden-import html2text --hidden-import lxml src/cli.py -n url-to-llm-friendly-md
+# Build the binary using spec file
+pyinstaller url-to-llm-friendly-md.spec
 
 # Clean up intermediate build files
 rm -rf build/
