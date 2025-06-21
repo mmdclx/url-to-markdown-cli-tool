@@ -18,7 +18,6 @@ try:
 except ImportError:
     # If imports fail, try from current directory
     import importlib.util
-    import inspect
     
     # Load page_fetcher
     spec = importlib.util.spec_from_file_location("page_fetcher", os.path.join(os.path.dirname(__file__), "page_fetcher.py"))
