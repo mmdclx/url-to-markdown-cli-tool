@@ -1,6 +1,6 @@
 # url-to-llm-friendly-md
 
-A CLI tool that converts web pages into clean, LLM-friendly markdown format. Originally inspired by [m92vyas/llm-reader](https://github.com/m92vyas/llm-reader), this tool fetches web content and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's perfect for feeding into large language models.
+A CLI tool that converts web pages into clean, LLM-friendly markdown format. It fetches web content and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's perfect for feeding into large language models.
 
 **Key features:**
 - Convert any webpage to properly formatted markdown with headers, links, and structure
@@ -69,6 +69,9 @@ url-to-llm-friendly-md https://example.com --no-images --no-links --remove-tags 
 # Run with visible browser (non-headless mode)
 url-to-llm-friendly-md https://example.com --no-headless
 ```
+
+### Thank you to m92vyas/llm-reader
+Originally inspired by [m92vyas/llm-reader](https://github.com/m92vyas/llm-reader), a python library.
 
 ## Dependencies
 The CLI relies on Google Chrome and the matching ChromeDriver binary. Make sure
