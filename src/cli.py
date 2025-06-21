@@ -5,8 +5,8 @@ import os
 
 # Add the src directory to the Python path for imports
 if getattr(sys, 'frozen', False):
-    # Running as compiled binary
-    bundle_dir = os.path.dirname(sys.executable)
+    # Running as compiled binary - use PyInstaller's temp extraction directory
+    bundle_dir = sys._MEIPASS
     sys.path.insert(0, bundle_dir)
 else:
     # Running as source
