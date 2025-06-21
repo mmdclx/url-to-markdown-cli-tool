@@ -3,9 +3,9 @@
 
 a = Analysis(
     ['src/cli.py'],
-    pathex=[],
+    pathex=['src'],
     binaries=[],
-    datas=[],
+    datas=[('src/page_fetcher.py', '.'), ('src/markdown_processor.py', '.')],
     hiddenimports=['page_fetcher', 'markdown_processor', 'selenium', 'beautifulsoup4', 'html2text', 'lxml'],
     hookspath=[],
     hooksconfig={},
