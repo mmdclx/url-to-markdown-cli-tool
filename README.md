@@ -74,7 +74,7 @@ url-to-llm-friendly-md https://spa-app.com --wait 5.0
 
 # Debug with visible browser to see content loading
 # Helpful when content isn't fully extracted
-url-to-llm-friendly-md https://dynamic-site.com --no-headless --wait 3.0
+url-to-llm-friendly-md https://dynamic-site.com --show-browser --wait 3.0
 
 # Maximum cleanup for LLM processing
 url-to-llm-friendly-md https://article.com \
@@ -125,7 +125,7 @@ Many modern websites use **JavaScript to load content dynamically** after the in
 2. **Debug with visible browser** to see what's happening:
    ```bash
    # Watch the page load in a visible browser window
-   url-to-llm-friendly-md https://dynamic-site.com --no-headless --wait 3.0
+   url-to-llm-friendly-md https://dynamic-site.com --show-browser --wait 3.0
    ```
    This opens a visible Chrome window so you can see if content is still loading or if there are other issues.
 
