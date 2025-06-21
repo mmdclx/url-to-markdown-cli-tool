@@ -74,7 +74,7 @@ url-to-llm-friendly-md https://spa-app.com --wait 5.0
 
 # Debug with visible browser to see content loading
 # Helpful when content isn't fully extracted
-url-to-llm-friendly-md https://dynamic-site.com --show-browser --wait 3.0
+url-to-llm-friendly-md https://dynamic-site.com --show-browser --wait 5.0
 
 # Maximum cleanup for LLM processing
 url-to-llm-friendly-md https://article.com \
@@ -125,7 +125,7 @@ Many modern websites use **JavaScript to load content dynamically** after the in
 2. **Debug with visible browser** to see what's happening:
    ```bash
    # Watch the page load in a visible browser window
-   url-to-llm-friendly-md https://dynamic-site.com --show-browser --wait 3.0
+   url-to-llm-friendly-md https://dynamic-site.com --show-browser --wait 5.0
    ```
    This opens a visible Chrome window so you can see if content is still loading or if there are other issues.
 
@@ -138,8 +138,7 @@ Many modern websites use **JavaScript to load content dynamically** after the in
 If content still isn't extracted after trying these approaches, the website may have anti-bot protection or require user interaction to load content.
 
 ## Dependencies
-The CLI relies on Google Chrome and the matching ChromeDriver binary. Make sure
-both are installed and on your `PATH` before running.
+The CLI relies on Google Chrome and the matching ChromeDriver binary. Make sure both are installed and on your `PATH` before running.
 
 ## Thank you to m92vyas/llm-reader
 Originally inspired by [m92vyas/llm-reader](https://github.com/m92vyas/llm-reader), a python library.
