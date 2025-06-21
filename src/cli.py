@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import sys
 import os
 
@@ -31,9 +30,9 @@ except ImportError:
     spec.loader.exec_module(markdown_processor_module)
     get_processed_markdown = markdown_processor_module.get_processed_markdown
 
-async def run(args: argparse.Namespace) -> None:
+def run(args: argparse.Namespace) -> None:
     try:
-        page_source = await get_page_source(
+        page_source = get_page_source(
             args.url,
             wait=args.wait,
             headless=not args.no_headless,
@@ -47,7 +46,7 @@ async def run(args: argparse.Namespace) -> None:
         raise SystemExit(
             "Failed to fetch the page. Ensure Chrome and ChromeDriver are installed."
         )
-    processed = await get_processed_markdown(
+    processed = get_processed_markdown(
         page_source,
         args.url,
         keep_images=not args.no_images,
@@ -110,7 +109,7 @@ def main() -> None:
         help="Remove specific HTML tags from the output (e.g., --remove-tags div span script)",
     )
     args = parser.parse_args()
-    asyncio.run(run(args))
+    run(args)
 
 if __name__ == "__main__":
     main()
