@@ -6,7 +6,10 @@ setup(
     py_modules=['cli'],
     package_dir={'': 'src'},
     install_requires=[
-        'llm-reader @ git+https://github.com/m92vyas/llm-reader',
+        'selenium',
+        'beautifulsoup4',
+        'html2text',
+        'lxml',
     ],
     entry_points={
         'console_scripts': [
