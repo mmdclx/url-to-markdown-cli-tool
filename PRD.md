@@ -177,20 +177,11 @@ Options:
 
 ## 6. Future Enhancements
 
-*TODO: This section will be expanded based on user feedback and requirements*
-
 ### 6.1 Planned Features
-- Content-specific extraction (articles, documentation, etc.)
-- Batch processing capabilities for multiple URLs
-- Configuration file support for complex setups
-- Additional output formats (JSON, plain text)
-- Performance optimizations for large-scale processing
+- Convert entire codebase to javascript, have the cli installable as a npm package.
 
 ### 6.2 Integration Opportunities
-- GitHub Actions integration for documentation workflows
-- Docker containerization for CI/CD pipelines
-- API wrapper for programmatic access
-- Plugin system for custom content processors
+- Docker containerisation for CI/CD pipelines
 
 ## 7. Risks and Mitigation
 
