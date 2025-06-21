@@ -3,13 +3,12 @@ Markdown processor module for converting HTML to clean, LLM-friendly markdown.
 
 Originally inspired by m92vyas/llm-reader.
 """
-import asyncio
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import html2text
 
 
-async def get_processed_markdown(page_source: str, base_url: str,
+def get_processed_markdown(page_source: str, base_url: str,
                                 html_parser: str = 'lxml',
                                 keep_images: bool = True, 
                                 remove_svg_image: bool = True, 
