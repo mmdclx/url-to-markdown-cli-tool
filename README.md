@@ -1,110 +1,173 @@
-# url-to-markdown-cli-tool
+# url-to-llm-friendly-md
 
-A CLI tool that converts web pages into clean, LLM-friendly markdown format. It fetches web content and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's great for feeding into large language models or using in a RAG architecture.
+A Node.js CLI tool that converts web pages into clean, LLM-friendly markdown format. It fetches web content using Puppeteer and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's perfect for feeding into large language models, RAG systems, or AI training datasets.
 
 **Key features:**
-- Convert any webpage to properly formatted markdown with headers, links, and structure
-- Remove images, links, or specific HTML tags as needed
-- Configurable wait times for dynamic content
-- Headless or visible browser modes
-- Standalone binary with no runtime dependencies
-- Clean output optimized for LLM parsing and understanding
+- 🔄 Convert any webpage to properly formatted markdown with headers, links, and structure
+- 🚫 Remove images, links, or specific HTML tags as needed
+- ⏱️ Configurable wait times for dynamic content and SPAs
+- 👁️ Headless or visible browser modes for debugging
+- 📦 Easy npm installation with global CLI access
+- 🧠 Clean output optimized for LLM parsing and understanding
+- ⚡ Fast Node.js implementation with Puppeteer browser automation
 
-## Setup
-Run `./install.sh` to create a `venv` directory and install dependencies.
+## Installation
 
-Activate the environment with:
+### Via npm (Recommended)
 
 ```bash
-source venv/bin/activate
+# Install globally to use anywhere
+npm install -g url-to-llm-friendly-md
+
+# Or install locally in your project
+npm install url-to-llm-friendly-md
 ```
 
-## Build
-Run `./build.sh` to create the `build/url-to-llm-friendly-md` binary.
+### System Requirements
 
-You may copy this binary anywhere you like or run it directly from the `build/` directory.
+- **Node.js** 18.0.0 or higher
+- **Google Chrome or Chromium** browser installed and accessible in PATH
 
-### Binary Size Optimization
-The binary is approximately 22MB due to bundled dependencies (Selenium, Chrome automation, HTML parsing libraries). For smaller binaries on Linux/Windows systems, install UPX:
+Chrome/Chromium will be automatically detected. If you don't have Chrome installed:
+
+**macOS:**
+```bash
+brew install --cask google-chrome
+```
+
+**Ubuntu/Debian:**
+```bash
+wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
+echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+apt-get update && apt-get install google-chrome-stable
+```
+
+**Windows:**
+Download from [https://www.google.com/chrome/](https://www.google.com/chrome/)
+
+## Quick Start
 
 ```bash
-# Linux/Windows (UPX compression works)
-brew install upx  # or apt-get install upx on Ubuntu
-./build.sh  # Will automatically compress if UPX is available
+# Convert a webpage to markdown file
+url-to-llm-md https://example.com -o example.md
 
-# macOS (UPX compression currently unsupported)
-./build.sh  # Build succeeds, UPX compression is skipped
+# Output to console
+url-to-llm-md https://news.ycombinator.com
+
+# Get help
+url-to-llm-md --help
 ```
 
 ## Usage
 
-Basic usage:
-```bash
-url-to-llm-friendly-md https://example.com -o page.md
-```
-
-### Usage Examples
-
-#### Basic Conversion
+### Basic Conversion
 ```bash
 # Convert a webpage to markdown file
-url-to-llm-friendly-md https://example.com -o example.md
+url-to-llm-md https://example.com -o example.md
 
-# Output to console
-url-to-llm-friendly-md https://news.ycombinator.com
+# Output to console (stdout)
+url-to-llm-md https://news.ycombinator.com
+
+# Convert with custom wait time for dynamic content
+url-to-llm-md https://spa-app.com --wait 3.0 -o spa-content.md
 ```
 
-#### Content Filtering
+### Content Filtering
 ```bash
 # Remove all images
-url-to-llm-friendly-md https://blog.example.com --no-images -o clean-blog.md
+url-to-llm-md https://blog.example.com --no-images -o clean-blog.md
+
+# Remove webpage links (keep text, remove hyperlinks)
+url-to-llm-md https://article.com --no-links -o text-only.md
 
 # Remove specific image types
-url-to-llm-friendly-md https://site.com --no-gif-images --no-svg-images
+url-to-llm-md https://site.com --no-gif-images --no-svg-images
 
-# Remove navigation and footer elements
-url-to-llm-friendly-md https://site.com --remove-tags nav footer aside
+# Remove specific HTML tags (navigation, footers, etc.)
+url-to-llm-md https://site.com --remove-tags nav footer aside script
 ```
 
-#### Advanced Options
+### Advanced Options
 ```bash
-# Dynamic content support - wait for JavaScript to load content
-# Useful for Single Page Applications (SPAs) that load content dynamically
-url-to-llm-friendly-md https://spa-app.com --wait 5.0
-
 # Debug with visible browser to see content loading
-# Helpful when content isn't fully extracted
-url-to-llm-friendly-md https://dynamic-site.com --show-browser --wait 5.0
+url-to-llm-md https://dynamic-site.com --show-browser --wait 5.0
 
 # Maximum cleanup for LLM processing
-url-to-llm-friendly-md https://article.com \
-  --no-images \
-  --no-links \
-  --remove-tags nav footer aside script style \
-  --wait 3.0 \
+url-to-llm-md https://article.com \\
+  --no-images \\
+  --no-links \\
+  --remove-tags nav footer aside script style \\
+  --wait 3.0 \\
   -o clean-article.md
+
+# Process single-page applications (SPAs)
+url-to-llm-md https://react-app.com --wait 5.0 --show-browser
 ```
 
-#### Pipeline Integration
+### Batch Processing & Automation
 ```bash
 # Batch processing with error handling
 for url in $(cat urls.txt); do
   echo "Processing: $url"
-  url-to-llm-friendly-md "$url" -o "output/$(basename $url).md" || echo "Failed: $url"
+  url-to-llm-md "$url" -o "output/$(basename $url).md" || echo "Failed: $url"
 done
 
-# CI/CD documentation update
-url-to-llm-friendly-md https://docs.internal.com/api \
-  --no-images \
-  --remove-tags nav sidebar \
+# Use in npm scripts
+{
+  "scripts": {
+    "fetch-docs": "url-to-llm-md https://docs.api.com --no-images -o docs/api.md"
+  }
+}
+
+# CI/CD documentation updates
+url-to-llm-md https://docs.internal.com/api \\
+  --no-images \\
+  --remove-tags nav sidebar \\
   -o docs/api-reference.md
 ```
 
-Run `url-to-llm-friendly-md --help` for all available options.
+### Pipeline Integration
 
-## FAQ
+```bash
+# Convert multiple URLs and combine
+cat urls.txt | while read url; do
+  url-to-llm-md "$url" --no-images --no-links
+  echo -e "\\n---\\n"
+done > combined-content.md
 
-### Why isn't webpage content fully extracted?
+# Extract specific content for AI training
+url-to-llm-md https://wikipedia.org/wiki/Machine_Learning \\
+  --no-images \\
+  --remove-tags nav footer sidebar \\
+  -o training-data/ml-article.md
+```
+
+## Command Line Options
+
+```
+Usage: url-to-llm-md [options] <url>
+
+Fetch URL content and output LLM-friendly markdown
+
+Arguments:
+  url                      URL to fetch
+
+Options:
+  -V, --version            output the version number
+  -o, --output <file>      Write output to file instead of stdout
+  --wait <seconds>         Seconds to wait for page to load (default: 1.5)
+  --show-browser           Show browser window (visible mode)
+  --no-images              Remove images from the output
+  --no-links               Remove webpage links from the output
+  --no-gif-images          Remove GIF images from the output  
+  --no-svg-images          Remove SVG images from the output
+  --remove-tags <tags...>  Remove specific HTML tags (e.g., --remove-tags div span)
+  -h, --help               display help for command
+```
+
+## Troubleshooting
+
+### Content Not Fully Extracted?
 
 Many modern websites use **JavaScript to load content dynamically** after the initial page loads. If you're only seeing partial content, loading spinners, or placeholder text, the website likely renders its main content using JavaScript.
 
@@ -119,26 +182,124 @@ Many modern websites use **JavaScript to load content dynamically** after the in
 1. **Increase wait time** for slow-loading content:
    ```bash
    # Wait 5 seconds for JavaScript content to load
-   url-to-llm-friendly-md https://spa-app.com --wait 5.0
+   url-to-llm-md https://spa-app.com --wait 5.0
    ```
 
 2. **Debug with visible browser** to see what's happening:
    ```bash
    # Watch the page load in a visible browser window
-   url-to-llm-friendly-md https://dynamic-site.com --show-browser --wait 5.0
+   url-to-llm-md https://dynamic-site.com --show-browser --wait 5.0
    ```
-   This opens a visible Chrome window so you can see if content is still loading or if there are other issues.
 
 3. **Try different wait times** - some sites may need longer:
    ```bash
    # For very slow sites, try waiting up to 10 seconds
-   url-to-llm-friendly-md https://slow-site.com --wait 10.0
+   url-to-llm-md https://slow-site.com --wait 10.0
    ```
 
-If content still isn't extracted after trying these approaches, the website may have anti-bot protection or require user interaction to load content.
+### Common Issues
 
-## Dependencies
-The CLI relies on Google Chrome and the matching ChromeDriver binary. Make sure both are installed and on your `PATH` before running.
+#### "Chrome/Chromium not found"
+```bash
+# Install Chrome (see Installation section above)
+# Or if Chrome is installed but not in PATH:
+export CHROME_EXECUTABLE_PATH="/path/to/chrome"
+```
 
-## Thank you to m92vyas/llm-reader
-Originally inspired by [m92vyas/llm-reader](https://github.com/m92vyas/llm-reader), a python library.
+#### "Permission denied" errors
+```bash
+# On Linux/macOS, make sure the binary is executable
+chmod +x /usr/local/bin/url-to-llm-md
+
+# Or reinstall globally
+npm uninstall -g url-to-llm-friendly-md
+npm install -g url-to-llm-friendly-md
+```
+
+#### Network timeout errors
+```bash
+# Increase wait time for slow networks
+url-to-llm-md https://example.com --wait 10.0
+```
+
+#### Out of memory errors
+```bash
+# For very large pages, you may need to increase Node.js memory
+node --max-old-space-size=4096 $(which url-to-llm-md) https://large-page.com
+```
+
+## Use Cases
+
+### 🤖 AI & Machine Learning
+- **Training Data**: Extract clean text from web articles for LLM training
+- **RAG Systems**: Convert documentation and articles for vector databases  
+- **Content Curation**: Batch process URLs for AI content pipelines
+
+### 📚 Documentation & Research
+- **Knowledge Base**: Convert external docs to consistent markdown format
+- **Research**: Extract academic papers and articles for analysis
+- **Archival**: Preserve web content in clean, readable format
+
+### 🔄 Content Migration
+- **CMS Migration**: Extract content from old websites
+- **Documentation Sites**: Convert existing content to markdown-based docs
+- **Static Site Generation**: Process dynamic content for static sites
+
+## API Usage (Programmatic)
+
+```javascript
+const { getPageSource } = require('url-to-llm-friendly-md/src/lib/pageFetcher');
+const { getProcessedMarkdown } = require('url-to-llm-friendly-md/src/lib/markdownProcessor');
+
+async function convertUrl(url) {
+  const pageSource = await getPageSource(url, { wait: 2.0 });
+  const markdown = await getProcessedMarkdown(pageSource, url, {
+    keepImages: false,
+    keepWebpageLinks: true
+  });
+  return markdown;
+}
+```
+
+## Development
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd url-to-llm-friendly-md
+
+# Install dependencies
+npm install
+
+# Run directly
+npm start https://example.com
+
+# Run in development mode
+npm run dev https://example.com
+
+# Build binaries (optional)
+npm run build
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Originally inspired by [m92vyas/llm-reader](https://github.com/m92vyas/llm-reader), a Python library
+- Built with [Puppeteer](https://pptr.dev/) for reliable browser automation
+- Uses [Cheerio](https://cheerio.js.org/) for server-side HTML manipulation
+- Powered by [Turndown](https://github.com/mixmark-io/turndown) for HTML to Markdown conversion
+
+---
+
+**Perfect for:** RAG systems, LLM training data preparation, content curation, documentation extraction, and any workflow that needs clean, structured text from web content.
