@@ -104,20 +104,14 @@ function postProcessMarkdown(markdownText) {
             // Fix common spacing issues within the line
             let processedLine = line;
             
-            // Fix missing spaces after punctuation
+            // Fix missing spaces after punctuation followed by capital letters
             processedLine = processedLine.replace(/([.!?])([A-Z])/g, '$1 $2');
-            
-            // Fix missing spaces around common patterns
-            processedLine = processedLine.replace(/([a-z])([A-Z])/g, '$1 $2');
             
             // Fix percentage/number concatenation (e.g., "20%Increased" -> "20% Increased")
             processedLine = processedLine.replace(/(\d+%?)([A-Z][a-z])/g, '$1 $2');
             
-            // Fix common concatenations like "wordLogo" -> "word Logo"
-            processedLine = processedLine.replace(/([a-z])(Logo|Inc|Corp|Ltd|LLC)/g, '$1 $2');
-            
-            // Fix URL-like concatenations that aren't actually URLs
-            processedLine = processedLine.replace(/([a-z])\.([a-z]{2,})\s/gi, '$1.$2 ');
+            // Fix common corporate suffix concatenations only
+            processedLine = processedLine.replace(/([a-z])(Logo|Inc|Corp|Ltd|LLC)(\s|$)/g, '$1 $2$3');
             
             cleanedLines.push(processedLine);
         }
