@@ -49,13 +49,13 @@ Download from [https://www.google.com/chrome/](https://www.google.com/chrome/)
 
 ```bash
 # Convert a webpage to markdown file
-url-to-llm-md https://example.com -o example.md
+url-to-md https://example.com -o example.md
 
 # Output to console
-url-to-llm-md https://news.ycombinator.com
+url-to-md https://news.ycombinator.com
 
 # Get help
-url-to-llm-md --help
+url-to-md --help
 ```
 
 ## Usage
@@ -63,37 +63,37 @@ url-to-llm-md --help
 ### Basic Conversion
 ```bash
 # Convert a webpage to markdown file
-url-to-llm-md https://example.com -o example.md
+url-to-md https://example.com -o example.md
 
 # Output to console (stdout)
-url-to-llm-md https://news.ycombinator.com
+url-to-md https://news.ycombinator.com
 
 # Convert with custom wait time for dynamic content
-url-to-llm-md https://spa-app.com --wait 3.0 -o spa-content.md
+url-to-md https://spa-app.com --wait 3.0 -o spa-content.md
 ```
 
 ### Content Filtering
 ```bash
 # Remove all images
-url-to-llm-md https://blog.example.com --no-images -o clean-blog.md
+url-to-md https://blog.example.com --no-images -o clean-blog.md
 
 # Remove webpage links (keep text, remove hyperlinks)
-url-to-llm-md https://article.com --no-links -o text-only.md
+url-to-md https://article.com --no-links -o text-only.md
 
 # Remove specific image types
-url-to-llm-md https://site.com --no-gif-images --no-svg-images
+url-to-md https://site.com --no-gif-images --no-svg-images
 
 # Remove specific HTML tags (navigation, footers, etc.)
-url-to-llm-md https://site.com --remove-tags nav footer aside script
+url-to-md https://site.com --remove-tags nav footer aside script
 ```
 
 ### Advanced Options
 ```bash
 # Debug with visible browser to see content loading
-url-to-llm-md https://dynamic-site.com --show-browser --wait 5.0
+url-to-md https://dynamic-site.com --show-browser --wait 5.0
 
 # Maximum cleanup for LLM processing
-url-to-llm-md https://article.com \\
+url-to-md https://article.com \\
   --no-images \\
   --no-links \\
   --remove-tags nav footer aside script style \\
@@ -101,7 +101,7 @@ url-to-llm-md https://article.com \\
   -o clean-article.md
 
 # Process single-page applications (SPAs)
-url-to-llm-md https://react-app.com --wait 5.0 --show-browser
+url-to-md https://react-app.com --wait 5.0 --show-browser
 ```
 
 ### Batch Processing & Automation
@@ -109,18 +109,18 @@ url-to-llm-md https://react-app.com --wait 5.0 --show-browser
 # Batch processing with error handling
 for url in $(cat urls.txt); do
   echo "Processing: $url"
-  url-to-llm-md "$url" -o "output/$(basename $url).md" || echo "Failed: $url"
+  url-to-md "$url" -o "output/$(basename $url).md" || echo "Failed: $url"
 done
 
 # Use in npm scripts
 {
   "scripts": {
-    "fetch-docs": "url-to-llm-md https://docs.api.com --no-images -o docs/api.md"
+    "fetch-docs": "url-to-md https://docs.api.com --no-images -o docs/api.md"
   }
 }
 
 # CI/CD documentation updates
-url-to-llm-md https://docs.internal.com/api \\
+url-to-md https://docs.internal.com/api \\
   --no-images \\
   --remove-tags nav sidebar \\
   -o docs/api-reference.md
@@ -131,12 +131,12 @@ url-to-llm-md https://docs.internal.com/api \\
 ```bash
 # Convert multiple URLs and combine
 cat urls.txt | while read url; do
-  url-to-llm-md "$url" --no-images --no-links
+  url-to-md "$url" --no-images --no-links
   echo -e "\\n---\\n"
 done > combined-content.md
 
 # Extract specific content for AI training
-url-to-llm-md https://wikipedia.org/wiki/Machine_Learning \\
+url-to-md https://wikipedia.org/wiki/Machine_Learning \\
   --no-images \\
   --remove-tags nav footer sidebar \\
   -o training-data/ml-article.md
@@ -145,7 +145,7 @@ url-to-llm-md https://wikipedia.org/wiki/Machine_Learning \\
 ## Command Line Options
 
 ```
-Usage: url-to-llm-md [options] <url>
+Usage: url-to-md [options] <url>
 
 Fetch URL content and output LLM-friendly markdown
 
@@ -182,19 +182,19 @@ Many modern websites use **JavaScript to load content dynamically** after the in
 1. **Increase wait time** for slow-loading content:
    ```bash
    # Wait 5 seconds for JavaScript content to load
-   url-to-llm-md https://spa-app.com --wait 5.0
+   url-to-md https://spa-app.com --wait 5.0
    ```
 
 2. **Debug with visible browser** to see what's happening:
    ```bash
    # Watch the page load in a visible browser window
-   url-to-llm-md https://dynamic-site.com --show-browser --wait 5.0
+   url-to-md https://dynamic-site.com --show-browser --wait 5.0
    ```
 
 3. **Try different wait times** - some sites may need longer:
    ```bash
    # For very slow sites, try waiting up to 10 seconds
-   url-to-llm-md https://slow-site.com --wait 10.0
+   url-to-md https://slow-site.com --wait 10.0
    ```
 
 ### Common Issues
@@ -209,7 +209,7 @@ export CHROME_EXECUTABLE_PATH="/path/to/chrome"
 #### "Permission denied" errors
 ```bash
 # On Linux/macOS, make sure the binary is executable
-chmod +x /usr/local/bin/url-to-llm-md
+chmod +x /usr/local/bin/url-to-md
 
 # Or reinstall globally
 npm uninstall -g url-to-llm-friendly-md
@@ -219,13 +219,13 @@ npm install -g url-to-llm-friendly-md
 #### Network timeout errors
 ```bash
 # Increase wait time for slow networks
-url-to-llm-md https://example.com --wait 10.0
+url-to-md https://example.com --wait 10.0
 ```
 
 #### Out of memory errors
 ```bash
 # For very large pages, you may need to increase Node.js memory
-node --max-old-space-size=4096 $(which url-to-llm-md) https://large-page.com
+node --max-old-space-size=4096 $(which url-to-md) https://large-page.com
 ```
 
 ## Use Cases

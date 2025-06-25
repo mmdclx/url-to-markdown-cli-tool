@@ -1,0 +1,11 @@
+# Task ID: 5
+# Title: Implement Markdown Conversion Engine
+# Status: pending
+# Dependencies: 4
+# Priority: high
+# Description: Replace html2text with turndown library for HTML to Markdown conversion optimized for LLMs
+# Details:
+Create markdown_processor.js using turndown library. Configure turndown rules for clean LLM-friendly output: preserve heading hierarchy, maintain list structures, handle links appropriately (with --no-links option), optimize whitespace handling, ensure proper line breaks and formatting. Add custom rules for better structure preservation.
+
+# Test Strategy:
+Compare markdown output quality with original Python version, test with various HTML structures (tables, lists, headings), verify LLM readability and structure preservation
