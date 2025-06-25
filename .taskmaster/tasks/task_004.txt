@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Implement HTML Processing and Cleanup
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Convert BeautifulSoup-based HTML processing to Cheerio for content cleaning and filtering
+# Details:
+Create html_processor.js using Cheerio to parse HTML, remove unwanted elements (script, style, nav, ads), implement tag removal functionality (--remove-tags), handle image filtering (--no-images, --no-gif-images, --no-svg-images), convert relative URLs to absolute URLs, clean up excessive whitespace and empty elements.
+
+# Test Strategy:
+Test HTML parsing with complex nested structures, verify tag removal works correctly, test image filtering with different image types, validate URL conversion accuracy
