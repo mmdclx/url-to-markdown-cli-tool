@@ -4,11 +4,11 @@
   "description": "CLI tool for converting web pages to clean, LLM-friendly markdown. Fetches content from URLs and converts HTML to optimized markdown format perfect for LLM training, RAG systems, and AI applications.",
   "main": "src/index.js",
   "bin": {
-    "url-to-llm-md": "./bin/url-to-llm-md"
+    "url-to-md": "./bin/url-to-md"
   },
   "scripts": {
     "start": "node src/index.js",
-    "build": "pkg src/index.js --targets node18-linux-x64,node18-macos-x64,node18-win-x64 --output bin/url-to-llm-md",
+    "build": "pkg src/index.js --targets node18-linux-x64,node18-macos-x64,node18-win-x64 --output bin/url-to-md",
     "test": "echo \"No tests specified yet\" && exit 0",
     "dev": "node src/index.js"
   },
