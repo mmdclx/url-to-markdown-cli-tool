@@ -1,0 +1,11 @@
+# Task ID: 1
+# Title: Convert Python CLI to Node.js/JavaScript
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Migrate the entire Python-based CLI tool to JavaScript/Node.js to enable npm package distribution
+# Details:
+Convert all Python modules (cli.py, page_fetcher.py, markdown_processor.py) to JavaScript equivalents. Replace Python dependencies: Selenium WebDriver -> Puppeteer, BeautifulSoup4 -> Cheerio, html2text -> turndown. Create package.json with proper CLI bin configuration. Maintain all existing functionality including argument parsing, web content fetching, and markdown conversion.
+
+# Test Strategy:
+Unit tests for each converted module, integration tests comparing output between Python and JS versions, CLI functionality tests across platforms

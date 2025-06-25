@@ -59,7 +59,7 @@ function main() {
     const program = new Command();
 
     program
-        .name('url-to-llm-md')
+        .name('url-to-md')
         .description('Fetch URL content and output LLM-friendly markdown')
         .version('1.0.0')
         .argument('<url>', 'URL to fetch')
