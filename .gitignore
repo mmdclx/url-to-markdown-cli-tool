@@ -39,6 +39,7 @@ node_modules/
 *.njsproj
 *.sln
 *.sw?
+*.swp
 # OS specific
 
 # Task Master AI
