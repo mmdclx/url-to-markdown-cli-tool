@@ -11,9 +11,20 @@ A Node.js CLI tool that converts web pages into clean, LLM-friendly markdown for
 - 🧠 Clean output optimized for LLM parsing and understanding
 - ⚡ Fast Node.js implementation with Puppeteer browser automation
 
+## Quick Install
+
+```bash
+npm install -g url-to-markdown-cli-tool
+```
+
+Then immediately get started:
+```bash
+url-to-md https://example.com -o example.md
+```
+
 ## Installation
 
-### Via npm (Recommended)
+### Via npm (When published)
 
 ```bash
 # Install globally to use anywhere
@@ -21,6 +32,16 @@ npm install -g url-to-markdown-cli-tool
 
 # Or install locally in your project
 npm install url-to-markdown-cli-tool
+```
+
+### From Source (Current)
+
+```bash
+# Clone and install from this repository
+git clone https://github.com/yourusername/url-to-markdown-cli-tool.git
+cd url-to-markdown-cli-tool
+npm install
+npm install -g .
 ```
 
 ### System Requirements
@@ -218,17 +239,20 @@ url-to-md https://example.com --wait 10.0
 - **Documentation Sites**: Convert existing content to markdown-based docs
 - **Static Site Generation**: Process dynamic content for static sites
 
-## Build the CLI
+## Install from Source
+
+To install directly from this repository:
 
 ```bash
+# Clone the repository
 git clone https://github.com/yourusername/url-to-markdown-cli-tool.git
 cd url-to-markdown-cli-tool
 
 # Install dependencies
 npm install
 
-# Link the CLI for local testing (makes 'url-to-md' command available globally)
-npm link
+# Install globally
+npm install -g .
 
 # Test the CLI
 url-to-md --help
