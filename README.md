@@ -1,4 +1,4 @@
-# url-to-llm-friendly-md
+# url-to-markdown-cli-tool
 
 A Node.js CLI tool that converts web pages into clean, LLM-friendly markdown format. It fetches web content using Puppeteer and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's perfect for feeding into large language models, RAG systems, or AI training datasets.
 
@@ -17,10 +17,10 @@ A Node.js CLI tool that converts web pages into clean, LLM-friendly markdown for
 
 ```bash
 # Install globally to use anywhere
-npm install -g url-to-llm-friendly-md
+npm install -g url-to-markdown-cli-tool
 
 # Or install locally in your project
-npm install url-to-llm-friendly-md
+npm install url-to-markdown-cli-tool
 ```
 
 ### System Requirements
@@ -34,14 +34,6 @@ Chrome/Chromium will be automatically detected. If you don't have Chrome install
 ```bash
 brew install --cask google-chrome
 ```
-
-**Ubuntu/Debian:**
-```bash
-wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
-echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
-apt-get update && apt-get install google-chrome-stable
-```
-
 **Windows:**
 Download from [https://www.google.com/chrome/](https://www.google.com/chrome/)
 
@@ -119,13 +111,6 @@ done
   }
 }
 
-# CI/CD documentation updates
-url-to-md https://docs.internal.com/api \\
-  --no-images \\
-  --remove-tags nav sidebar \\
-  -o docs/api-reference.md
-```
-
 ### Pipeline Integration
 
 ```bash
@@ -171,12 +156,6 @@ Options:
 
 Many modern websites use **JavaScript to load content dynamically** after the initial page loads. If you're only seeing partial content, loading spinners, or placeholder text, the website likely renders its main content using JavaScript.
 
-**Examples of dynamic content:**
-- Single Page Applications (SPAs) built with React, Vue, or Angular
-- News sites that load articles via AJAX
-- E-commerce sites that load product details dynamically
-- Social media feeds that populate after page load
-
 **Solutions:**
 
 1. **Increase wait time** for slow-loading content:
@@ -212,20 +191,14 @@ export CHROME_EXECUTABLE_PATH="/path/to/chrome"
 chmod +x /usr/local/bin/url-to-md
 
 # Or reinstall globally
-npm uninstall -g url-to-llm-friendly-md
-npm install -g url-to-llm-friendly-md
+npm uninstall -g url-to-markdown-cli-tool
+npm install -g url-to-markdown-cli-tool
 ```
 
 #### Network timeout errors
 ```bash
 # Increase wait time for slow networks
 url-to-md https://example.com --wait 10.0
-```
-
-#### Out of memory errors
-```bash
-# For very large pages, you may need to increase Node.js memory
-node --max-old-space-size=4096 $(which url-to-md) https://large-page.com
 ```
 
 ## Use Cases
@@ -245,53 +218,21 @@ node --max-old-space-size=4096 $(which url-to-md) https://large-page.com
 - **Documentation Sites**: Convert existing content to markdown-based docs
 - **Static Site Generation**: Process dynamic content for static sites
 
-## API Usage (Programmatic)
-
-```javascript
-const { getPageSource } = require('url-to-llm-friendly-md/src/lib/pageFetcher');
-const { getProcessedMarkdown } = require('url-to-llm-friendly-md/src/lib/markdownProcessor');
-
-async function convertUrl(url) {
-  const pageSource = await getPageSource(url, { wait: 2.0 });
-  const markdown = await getProcessedMarkdown(pageSource, url, {
-    keepImages: false,
-    keepWebpageLinks: true
-  });
-  return markdown;
-}
-```
-
-## Development
+## Build the CLI
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd url-to-llm-friendly-md
+git clone https://github.com/yourusername/url-to-markdown-cli-tool.git
+cd url-to-markdown-cli-tool
 
 # Install dependencies
 npm install
 
-# Run directly
-npm start https://example.com
+# Link the CLI for local testing (makes 'url-to-md' command available globally)
+npm link
 
-# Run in development mode
-npm run dev https://example.com
-
-# Build binaries (optional)
-npm run build
+# Test the CLI
+url-to-md --help
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
@@ -302,4 +243,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Perfect for:** RAG systems, LLM training data preparation, content curation, documentation extraction, and any workflow that needs clean, structured text from web content.
+**Perfect for:** RAG systems, LLM training data preparation, documentation extraction, and any workflow that needs clean, structured text from web content.
