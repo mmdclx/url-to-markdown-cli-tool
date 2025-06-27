@@ -17,6 +17,8 @@ const puppeteer = require('puppeteer');
  * @param {string} [options.userAgent] - User agent string for the browser
  * @param {boolean} [options.showBrowser=false] - Show browser window (opposite of headless)
  * @param {boolean} [options.disableWebSecurity=false] - Disable web security (CORS) - use with caution
+ * @param {number} [options.viewportWidth=375] - Viewport width in pixels (320-1920)
+ * @param {number} [options.viewportHeight=667] - Viewport height in pixels (568-1080)
  * @returns {Promise<string>} HTML source code of the page
  * @throws {Error} If there's an error while fetching the page
  */
@@ -26,8 +28,18 @@ async function getPageSource(url, options = {}) {
         headless = true,
         showBrowser = false,
         disableWebSecurity = false,
-        userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        viewportWidth = 375,
+        viewportHeight = 667
     } = options;
+
+    // Validate viewport dimensions
+    if (viewportWidth < 320 || viewportWidth > 1920) {
+        throw new Error('Viewport width must be between 320 and 1920 pixels');
+    }
+    if (viewportHeight < 568 || viewportHeight > 1080) {
+        throw new Error('Viewport height must be between 568 and 1080 pixels');
+    }
 
     // showBrowser overrides headless setting
     const isHeadless = showBrowser ? false : headless;
@@ -52,8 +64,8 @@ async function getPageSource(url, options = {}) {
 
         const page = await browser.newPage();
         
-        // Set modern viewport for better compatibility
-        await page.setViewport({ width: 1920, height: 1080 });
+        // Set viewport with configurable dimensions (defaults to mobile-first)
+        await page.setViewport({ width: viewportWidth, height: viewportHeight });
         
         // Set user agent
         await page.setUserAgent(userAgent);
