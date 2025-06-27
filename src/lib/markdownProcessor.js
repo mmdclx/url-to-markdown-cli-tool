@@ -293,13 +293,7 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
         });
 
         // Configure TurndownService rules for better spacing and formatting
-        turndownService.addRule('preserveWhitespace', {
-            filter: ['pre', 'code'],
-            replacement: function (content) {
-                return content;
-            }
-        });
-
+        
         // Add custom rule for better spacing between inline elements
         turndownService.addRule('improvedSpacing', {
             filter: ['span', 'div'],
