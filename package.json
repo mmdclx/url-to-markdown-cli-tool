@@ -1,14 +1,13 @@
 {
-  "name": "url-to-llm-friendly-md",
+  "name": "url-to-markdown-cli-tool",
   "version": "1.0.0",
   "description": "CLI tool for converting web pages to clean, LLM-friendly markdown. Fetches content from URLs and converts HTML to optimized markdown format perfect for LLM training, RAG systems, and AI applications.",
   "main": "src/index.js",
   "bin": {
-    "url-to-md": "./bin/url-to-md"
+    "url-to-md": "./src/index.js"
   },
   "scripts": {
     "start": "node src/index.js",
-    "build": "pkg src/index.js --targets node18-linux-x64,node18-macos-x64,node18-win-x64 --output bin/url-to-md",
     "test": "echo \"No tests specified yet\" && exit 0",
     "dev": "node src/index.js"
   },
@@ -19,36 +18,28 @@
     "llm",
     "html-to-markdown",
     "puppeteer",
-    "ai",
-    "machine-learning",
     "rag",
     "training-data",
     "content-extraction",
     "web-to-markdown"
   ],
-  "author": {
-    "name": "JavaScript/Node.js Port",
-    "email": "noreply@example.com"
-  },
   "license": "MIT",
-  "homepage": "https://github.com/example/url-to-llm-friendly-md#readme",
+  "homepage": "https://github.com/mmdclx/url-to-markdown-cli-tool#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/example/url-to-llm-friendly-md.git"
+    "url": "git+https://github.com/mmdclx/url-to-markdown-cli-tool.git"
   },
   "bugs": {
-    "url": "https://github.com/example/url-to-llm-friendly-md/issues"
+    "url": "https://github.com/mmdclx/url-to-markdown-cli-tool/issues"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
     "commander": "^12.0.0",
     "puppeteer": "^23.0.0",
-    "turndown": "^7.2.0",
-    "url-to-llm-friendly-md": "file:url-to-llm-friendly-md-1.0.0.tgz"
+    "turndown": "^7.2.0"
   },
   "devDependencies": {
-    "jest": "^29.0.0",
-    "pkg": "^5.8.1"
+    "jest": "^29.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -56,7 +47,6 @@
   "files": [
     "src/index.js",
     "src/lib/",
-    "bin/",
     "README.md"
   ]
 }

@@ -22,7 +22,9 @@ async function run(options) {
             wait: options.wait,
             headless: !options.showBrowser,
             showBrowser: options.showBrowser,
-            disableWebSecurity: options.disableWebSecurity
+            disableWebSecurity: options.disableWebSecurity,
+            viewportWidth: options.viewportWidth,
+            viewportHeight: options.viewportHeight
         });
 
         if (!pageSource) {
@@ -67,6 +69,11 @@ function main() {
         .option('--wait <seconds>', 'Seconds to wait for the page to load', parseFloat, 1.5)
         .option('--show-browser', 'Show the browser window (visible mode)', false)
         .option('--disable-web-security', 'Disable web security (CORS) - use with caution for difficult sites', false)
+        .option('--viewport-width <width>', 'Set viewport width in pixels (320-1920)', (value) => parseInt(value, 10), 375)
+        .option('--viewport-height <height>', 'Set viewport height in pixels (568-1080)', (value) => parseInt(value, 10), 667)
+        .option('--mobile', 'Use mobile viewport (375x667 - iPhone)')
+        .option('--tablet', 'Use tablet viewport (768x1024 - iPad portrait)')
+        .option('--desktop', 'Use desktop viewport (1920x1080 - standard desktop)')
         .option('--no-images', 'Remove images from the output')
         .option('--no-links', 'Remove webpage links from the output')
         .option('--no-gif-images', 'Remove GIF images from the output')
@@ -90,6 +97,35 @@ function main() {
             // Validate wait time
             if (options.wait < 0) {
                 console.error('Error: Wait time must be non-negative');
+                process.exit(1);
+            }
+
+            // Handle viewport presets (presets override individual width/height options)
+            if (options.mobile) {
+                options.viewportWidth = 375;
+                options.viewportHeight = 667;
+            } else if (options.tablet) {
+                options.viewportWidth = 768;
+                options.viewportHeight = 1024;
+            } else if (options.desktop) {
+                options.viewportWidth = 1920;
+                options.viewportHeight = 1080;
+            }
+
+            // Validate viewport dimensions
+            if (options.viewportWidth < 320 || options.viewportWidth > 1920) {
+                console.error('Error: Viewport width must be between 320 and 1920 pixels');
+                process.exit(1);
+            }
+            if (options.viewportHeight < 568 || options.viewportHeight > 1080) {
+                console.error('Error: Viewport height must be between 568 and 1080 pixels');
+                process.exit(1);
+            }
+
+            // Check for conflicting viewport options
+            const presetCount = [options.mobile, options.tablet, options.desktop].filter(Boolean).length;
+            if (presetCount > 1) {
+                console.error('Error: Only one viewport preset (--mobile, --tablet, or --desktop) can be used at a time');
                 process.exit(1);
             }
 
