@@ -20,7 +20,8 @@ function addSpacingBetweenElements($) {
     const blockElements = [
         'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
         'section', 'article', 'header', 'main', 'footer',
-        'li', 'dd', 'dt', 'blockquote', 'pre'
+        'li', 'dd', 'dt', 'blockquote', 'pre',
+        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'
     ];
     
     // Define inline elements that should have spaces between them
@@ -154,6 +155,7 @@ function postProcessMarkdown(markdownText) {
  * @param {boolean} [options.removeScriptTag=true] - Remove script tags
  * @param {boolean} [options.removeStyleTag=true] - Remove style tags
  * @param {Array<string>} [options.removeTags=[]] - Additional HTML tags to remove
+ * @param {boolean} [options.preserveTableStructure=false] - Enable enhanced table formatting
  * @returns {Promise<string>} Clean markdown text ready for LLM processing
  * @throws {Error} If there's an error while processing the HTML
  */
@@ -166,7 +168,8 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
         keepWebpageLinks = true,
         removeScriptTag = true,
         removeStyleTag = true,
-        removeTags = []
+        removeTags = [],
+        preserveTableStructure = false
     } = options;
 
     try {
@@ -326,6 +329,109 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
                 return prefix + content + (node.nextSibling && !/\n$/.test(content) ? '\n' : '');
             }
         });
+
+        // Add enhanced table conversion rules if requested
+        if (preserveTableStructure) {
+            turndownService.addRule('tableCell', {
+                filter: ['th', 'td'],
+                replacement: function (content, node, options) {
+                    // Clean content and remove excessive whitespace
+                    content = content.trim().replace(/\n+/g, ' ').replace(/\s+/g, ' ');
+                    
+                    // If content is empty, use a space to maintain table structure
+                    if (!content) {
+                        content = ' ';
+                    }
+                    
+                    return content;
+                }
+            });
+
+            turndownService.addRule('tableRow', {
+                filter: 'tr',
+                replacement: function (content, node, options) {
+                    // Extract all cells from this row
+                    const cells = Array.from(node.children).filter(child => 
+                        child.tagName && ['TD', 'TH'].includes(child.tagName.toUpperCase())
+                    );
+                    
+                    if (cells.length === 0) {
+                        return '';
+                    }
+                    
+                    // Convert each cell and join with pipes
+                    const cellContents = cells.map(cell => {
+                        const cellContent = turndownService.turndown(cell.innerHTML || '').trim();
+                        return cellContent || ' ';
+                    });
+                    
+                    return '| ' + cellContents.join(' | ') + ' |\n';
+                }
+            });
+
+            turndownService.addRule('table', {
+                filter: 'table',
+                replacement: function (content, node, options) {
+                    // Extract caption if present
+                    const caption = node.querySelector('caption');
+                    let captionText = '';
+                    if (caption) {
+                        captionText = caption.textContent.trim();
+                    }
+                    
+                    // Extract all rows
+                    const rows = Array.from(node.querySelectorAll('tr'));
+                    
+                    if (rows.length === 0) {
+                        return captionText ? '\n**' + captionText + '**\n\n' : '\n';
+                    }
+                    
+                    let tableMarkdown = captionText ? '\n**' + captionText + '**\n\n' : '\n';
+                    let hasHeaders = false;
+                    
+                    // Check if first row contains th elements
+                    const firstRowCells = Array.from(rows[0].children);
+                    if (firstRowCells.some(cell => cell.tagName && cell.tagName.toUpperCase() === 'TH')) {
+                        hasHeaders = true;
+                    }
+                    
+                    // Process each row
+                    rows.forEach((row, index) => {
+                        const cells = Array.from(row.children).filter(child => 
+                            child.tagName && ['TD', 'TH'].includes(child.tagName.toUpperCase())
+                        );
+                        
+                        if (cells.length === 0) {
+                            return;
+                        }
+                        
+                        // Convert each cell
+                        const cellContents = cells.map(cell => {
+                            const cellContent = turndownService.turndown(cell.innerHTML || '').trim();
+                            return cellContent || ' ';
+                        });
+                        
+                        tableMarkdown += '| ' + cellContents.join(' | ') + ' |\n';
+                        
+                        // Add header separator after first row if it contains headers
+                        if (index === 0 && hasHeaders) {
+                            const separators = cellContents.map(() => '---');
+                            tableMarkdown += '| ' + separators.join(' | ') + ' |\n';
+                        }
+                    });
+                    
+                    return tableMarkdown + '\n';
+                }
+            });
+
+            turndownService.addRule('tableCaption', {
+                filter: 'caption',
+                replacement: function (content, node, options) {
+                    content = content.trim();
+                    return content ? '\n**' + content + '**\n\n' : '';
+                }
+            });
+        }
 
         // Get body content or fall back to full document
         const bodyContent = $('body');
