@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complex Table Test</title>
+    <style>
+        .complex-table {
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+        }
+        .section-header {
+            background-color: #333;
+            color: white;
+            font-weight: bold;
+        }
+        .sub-header {
+            background-color: #f0f0f0;
+            font-style: italic;
+        }
+        .number {
+            text-align: right;
+            font-family: monospace;
+        }
+        .highlight {
+            background-color: #ffeb3b;
+        }
+    </style>
+</head>
+<body>
+    <!-- Complex table combining multiple features -->
+    <table class="complex-table" border="1">
+        <caption>Quarterly Sales Report - 2023</caption>
+        <thead>
+            <tr class="section-header">
+                <th rowspan="2">Region</th>
+                <th colspan="4">Quarter 1</th>
+                <th colspan="4">Quarter 2</th>
+                <th rowspan="2">Total</th>
+            </tr>
+            <tr class="sub-header">
+                <th>Jan</th>
+                <th>Feb</th>
+                <th>Mar</th>
+                <th>Q1 Total</th>
+                <th>Apr</th>
+                <th>May</th>
+                <th>Jun</th>
+                <th>Q2 Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>North</strong></td>
+                <td class="number">$1,200</td>
+                <td class="number">$1,350</td>
+                <td class="number highlight">$1,500</td>
+                <td class="number">$4,050</td>
+                <td class="number">$1,400</td>
+                <td class="number">$1,250</td>
+                <td class="number">$1,600</td>
+                <td class="number">$4,250</td>
+                <td class="number highlight">$8,300</td>
+            </tr>
+            <tr>
+                <td><em>South</em></td>
+                <td class="number">$900</td>
+                <td class="number">$1,100</td>
+                <td class="number">$1,300</td>
+                <td class="number">$3,300</td>
+                <td class="number">$1,200</td>
+                <td class="number">$1,400</td>
+                <td class="number highlight">$1,700</td>
+                <td class="number">$4,300</td>
+                <td class="number">$7,600</td>
+            </tr>
+            <tr>
+                <td>
+                    East
+                    <br>
+                    <small><a href="https://example.com/east">Details</a></small>
+                </td>
+                <td class="number">$800</td>
+                <td class="number">$950</td>
+                <td class="number">$1,100</td>
+                <td class="number">$2,850</td>
+                <td class="number">$1,000</td>
+                <td class="number">$1,150</td>
+                <td class="number">$1,300</td>
+                <td class="number">$3,450</td>
+                <td class="number">$6,300</td>
+            </tr>
+            <tr class="section-header">
+                <td colspan="9"><strong>Subtotal</strong></td>
+                <td class="number highlight">$22,200</td>
+            </tr>
+            <tr>
+                <td colspan="10">
+                    <small>
+                        <em>Note: Figures include </em>
+                        <code>tax_excluded</code>
+                        <em> amounts. For details, see </em>
+                        <a href="https://example.com/methodology">methodology</a>.
+                    </small>
+                </td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr class="section-header">
+                <td colspan="9"><strong>Grand Total</strong></td>
+                <td class="number"><strong>$22,200</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>
