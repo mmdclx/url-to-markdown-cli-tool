@@ -1,10 +1,15 @@
 # url-to-markdown-cli-tool
 
-A Node.js CLI tool that converts web pages into clean, LLM-friendly markdown format. It fetches web content using Puppeteer and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's perfect for feeding into large language models, RAG systems, or AI training datasets.
+A Node.js CLI tool that converts web pages into clean, LLM-friendly markdown format. It fetches web content using Puppeteer and strips away noise like ads, navigation elements, and unnecessary formatting, leaving you with properly formatted markdown that's perfect for feeding into large language models, RAG systems, or AI training datasets. 
+
+No LLM or API keys required.
 
 **Key features:**
 - 🔄 Convert any webpage to properly formatted markdown with headers, links, and structure
+- 🧹 **Smart content cleaning** - Remove navigation, footers, scripts and other non-content elements
 - 🚫 Remove images, links, or specific HTML tags as needed
+- 📊 **Enhanced table conversion** - HTML tables become clean markdown tables with pipes and headers
+- 📱 **Viewport control** - Mobile, tablet, desktop viewports for responsive content extraction
 - ⏱️ Configurable wait times for dynamic content and SPAs
 - 👁️ Headless or visible browser modes for debugging
 - 📦 Easy npm installation with global CLI access
@@ -87,6 +92,9 @@ url-to-md https://spa-app.com --wait 3.0 -o spa-content.md
 
 ### Content Filtering
 ```bash
+# Smart content cleaning - removes nav, footer, aside, script, style, header, noscript, canvas
+url-to-md https://blog.example.com --clean-content -o clean-blog.md
+
 # Remove all images
 url-to-md https://blog.example.com --no-images -o clean-blog.md
 
@@ -96,8 +104,23 @@ url-to-md https://article.com --no-links -o text-only.md
 # Remove specific image types
 url-to-md https://site.com --no-gif-images --no-svg-images
 
-# Remove specific HTML tags (navigation, footers, etc.)
+# Remove specific HTML tags manually
 url-to-md https://site.com --remove-tags nav footer aside script
+```
+
+### Viewport Configuration
+```bash
+# Use mobile viewport for responsive sites (375x667 - iPhone)
+url-to-md https://example.com --mobile -o mobile-view.md
+
+# Use tablet viewport (768x1024 - iPad portrait)
+url-to-md https://example.com --tablet -o tablet-view.md
+
+# Use desktop viewport (1920x1080 - standard desktop)
+url-to-md https://example.com --desktop -o desktop-view.md
+
+# Custom viewport dimensions
+url-to-md https://example.com --viewport-width 1200 --viewport-height 800 -o custom-view.md
 ```
 
 ### Advanced Options
@@ -107,14 +130,17 @@ url-to-md https://dynamic-site.com --show-browser --wait 5.0
 
 # Maximum cleanup for LLM processing
 url-to-md https://article.com \\
+  --clean-content \\
   --no-images \\
   --no-links \\
-  --remove-tags nav footer aside script style \\
   --wait 3.0 \\
   -o clean-article.md
 
 # Process single-page applications (SPAs)
 url-to-md https://react-app.com --wait 5.0 --show-browser
+
+# Disable web security for difficult sites (use with caution)
+url-to-md https://cors-protected-site.com --disable-web-security
 ```
 
 ### Batch Processing & Automation
@@ -156,19 +182,26 @@ Usage: url-to-md [options] <url>
 Fetch URL content and output LLM-friendly markdown
 
 Arguments:
-  url                      URL to fetch
+  url                              URL to fetch
 
 Options:
-  -V, --version            output the version number
-  -o, --output <file>      Write output to file instead of stdout
-  --wait <seconds>         Seconds to wait for page to load (default: 1.5)
-  --show-browser           Show browser window (visible mode)
-  --no-images              Remove images from the output
-  --no-links               Remove webpage links from the output
-  --no-gif-images          Remove GIF images from the output  
-  --no-svg-images          Remove SVG images from the output
-  --remove-tags <tags...>  Remove specific HTML tags (e.g., --remove-tags div span)
-  -h, --help               display help for command
+  -V, --version                    output the version number
+  -o, --output <file>              Write output to file instead of stdout
+  --wait <seconds>                 Seconds to wait for page to load (default: 1.5)
+  --show-browser                   Show browser window (visible mode)
+  --no-images                      Remove images from the output
+  --no-links                       Remove webpage links from the output
+  --no-gif-images                  Remove GIF images from the output  
+  --no-svg-images                  Remove SVG images from the output
+  --remove-tags <tags...>          Remove specific HTML tags (e.g., --remove-tags div span)
+  --clean-content                  Remove common non-content tags (nav, footer, aside, script, style, header, noscript, canvas)
+  --mobile                         Use mobile viewport (375x667 - iPhone)
+  --tablet                         Use tablet viewport (768x1024 - iPad portrait)
+  --desktop                        Use desktop viewport (1920x1080 - standard desktop)
+  --viewport-width <width>         Set viewport width in pixels (320-1920, default: 375)
+  --viewport-height <height>       Set viewport height in pixels (568-1080, default: 667)
+  --disable-web-security           Disable web security (CORS) - use with caution for difficult sites
+  -h, --help                       display help for command
 ```
 
 ## Troubleshooting
@@ -228,6 +261,7 @@ url-to-md https://example.com --wait 10.0
 - **Training Data**: Extract clean text from web articles for LLM training
 - **RAG Systems**: Convert documentation and articles for vector databases  
 - **Content Curation**: Batch process URLs for AI content pipelines
+- **Structured Data**: Extract tables and structured content in markdown format
 
 ### 📚 Documentation & Research
 - **Knowledge Base**: Convert external docs to consistent markdown format
@@ -267,4 +301,4 @@ url-to-md --help
 
 ---
 
-**Perfect for:** RAG systems, LLM training data preparation, documentation extraction, and any workflow that needs clean, structured text from web content.
+**Perfect for:** RAG systems, LLM training data preparation, documentation extraction, table data extraction, and any workflow that needs clean, structured text from web content.
