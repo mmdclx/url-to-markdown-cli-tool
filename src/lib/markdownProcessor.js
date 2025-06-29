@@ -169,7 +169,7 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
         removeScriptTag = true,
         removeStyleTag = true,
         removeTags = [],
-        preserveTableStructure = false
+        preserveTableStructure = true
     } = options;
 
     try {
