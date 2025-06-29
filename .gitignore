@@ -44,4 +44,4 @@ node_modules/
 # OS specific
 
 # Task Master AI
-.taskmaster/ 
+.taskmaster/ coverage/
