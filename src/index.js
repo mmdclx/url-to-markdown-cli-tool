@@ -37,8 +37,7 @@ async function run(options) {
             keepWebpageLinks: options.links !== false,
             removeGifImage: options.gifImages === false,
             removeSvgImage: options.svgImages === false,
-            removeTags: options.removeTags || [],
-            preserveTableStructure: options.preserveTableStructure || false
+            removeTags: options.removeTags || []
         });
 
         // Output result
@@ -80,7 +79,6 @@ function main() {
         .option('--no-gif-images', 'Remove GIF images from the output')
         .option('--no-svg-images', 'Remove SVG images from the output')
         .option('--remove-tags <tags...>', 'Remove specific HTML tags from the output (e.g., --remove-tags div span script)')
-        .option('--preserve-table-structure', 'Enable enhanced table formatting with proper markdown table syntax')
         .action(async (url, options) => {
             // Handle deprecated --no-headless flag
             if (options.noHeadless) {
