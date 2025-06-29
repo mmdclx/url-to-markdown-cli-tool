@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Malformed Table Test</title>
+</head>
+<body>
+    <!-- Various malformed table scenarios -->
+    
+    <!-- Missing closing tags -->
+    <h3>Missing Closing Tags</h3>
+    <table>
+        <tr>
+            <td>Cell 1
+            <td>Cell 2</td>
+            <td>Cell 3
+        </tr>
+        <tr>
+            <td>Row 2 Cell 1</td>
+            <td>Row 2 Cell 2
+            <td>Row 2 Cell 3</td>
+    </table>
+    
+    <!-- Mismatched cell counts -->
+    <h3>Mismatched Cell Counts</h3>
+    <table>
+        <tr>
+            <td>Row 1 Cell 1</td>
+            <td>Row 1 Cell 2</td>
+            <td>Row 1 Cell 3</td>
+        </tr>
+        <tr>
+            <td>Row 2 Cell 1</td>
+            <td>Row 2 Cell 2</td>
+        </tr>
+        <tr>
+            <td>Row 3 Cell 1</td>
+            <td>Row 3 Cell 2</td>
+            <td>Row 3 Cell 3</td>
+            <td>Row 3 Cell 4</td>
+            <td>Row 3 Cell 5</td>
+        </tr>
+    </table>
+    
+    <!-- Invalid nesting -->
+    <h3>Invalid Nesting</h3>
+    <table>
+        <div>
+            <tr>
+                <td>Invalid div inside table</td>
+            </tr>
+        </div>
+        <tr>
+            <td>
+                <p>Paragraph in cell</p>
+                <tr>
+                    <td>Invalid nested tr</td>
+                </tr>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

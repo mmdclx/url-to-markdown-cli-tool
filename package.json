@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "test": "echo \"No tests specified yet\" && exit 0",
+    "test": "jest",
     "dev": "node src/index.js"
   },
   "keywords": [
