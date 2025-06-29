@@ -31,13 +31,22 @@ async function run(options) {
             throw new Error('Failed to fetch the page. Ensure Chrome/Chromium is installed.');
         }
 
+        // Build list of tags to remove
+        let tagsToRemove = options.removeTags || [];
+        
+        // Add clean-content tags if option is enabled
+        if (options.cleanContent) {
+            const cleanContentTags = ['nav', 'footer', 'aside', 'script', 'style', 'header', 'noscript', 'canvas'];
+            tagsToRemove = [...tagsToRemove, ...cleanContentTags];
+        }
+
         // Process HTML to markdown
         const processed = await getProcessedMarkdown(pageSource, options.url, {
             keepImages: options.images !== false,
             keepWebpageLinks: options.links !== false,
             removeGifImage: options.gifImages === false,
             removeSvgImage: options.svgImages === false,
-            removeTags: options.removeTags || []
+            removeTags: tagsToRemove
         });
 
         // Output result
@@ -66,26 +75,21 @@ function main() {
         .version('1.0.0')
         .argument('<url>', 'URL to fetch')
         .option('-o, --output <file>', 'Write output to file instead of stdout')
+        .option('--no-links', 'Remove webpage links from the output')
+        .option('--no-images', 'Remove images from the output')
+        .option('--no-gif-images', 'Remove GIF images from the output')
+        .option('--no-svg-images', 'Remove SVG images from the output')
+        .option('--remove-tags <tags...>', 'Remove specific HTML tags from the output (e.g., --remove-tags div span button)')
+        .option('--clean-content', 'Remove common non-content tags (nav, footer, aside, script, style, header, noscript, canvas)')
         .option('--wait <seconds>', 'Seconds to wait for the page to load', parseFloat, 1.5)
         .option('--show-browser', 'Show the browser window (visible mode)', false)
-        .option('--disable-web-security', 'Disable web security (CORS) - use with caution for difficult sites', false)
-        .option('--viewport-width <width>', 'Set viewport width in pixels (320-1920)', (value) => parseInt(value, 10), 375)
-        .option('--viewport-height <height>', 'Set viewport height in pixels (568-1080)', (value) => parseInt(value, 10), 667)
         .option('--mobile', 'Use mobile viewport (375x667 - iPhone)')
         .option('--tablet', 'Use tablet viewport (768x1024 - iPad portrait)')
         .option('--desktop', 'Use desktop viewport (1920x1080 - standard desktop)')
-        .option('--no-images', 'Remove images from the output')
-        .option('--no-links', 'Remove webpage links from the output')
-        .option('--no-gif-images', 'Remove GIF images from the output')
-        .option('--no-svg-images', 'Remove SVG images from the output')
-        .option('--remove-tags <tags...>', 'Remove specific HTML tags from the output (e.g., --remove-tags div span script)')
+        .option('--viewport-width <width>', 'Set viewport width in pixels (320-1920)', (value) => parseInt(value, 10), 375)
+        .option('--viewport-height <height>', 'Set viewport height in pixels (568-1080)', (value) => parseInt(value, 10), 667)
+        .option('--disable-web-security', 'Disable web security (CORS) - use with caution for difficult sites', false)
         .action(async (url, options) => {
-            // Handle deprecated --no-headless flag
-            if (options.noHeadless) {
-                console.warn('Warning: --no-headless is deprecated. Use --show-browser instead.');
-                options.showBrowser = true;
-            }
-
             // Validate URL
             try {
                 new URL(url);
