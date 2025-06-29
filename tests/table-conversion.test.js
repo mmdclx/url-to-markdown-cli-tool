@@ -23,9 +23,7 @@ describe('Table Conversion Tests', () => {
   describe('Simple Table Conversion', () => {
     test('should convert basic 3x3 table correctly', async () => {
       const html = await loadFixture('simple-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       expect(markdown).toContain('Cell 1');
       expect(markdown).toContain('Cell 2');
@@ -41,9 +39,7 @@ describe('Table Conversion Tests', () => {
   describe('Header Table Conversion', () => {
     test('should properly handle table headers with th elements', async () => {
       const html = await loadFixture('header-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       expect(markdown).toContain('Name');
       expect(markdown).toContain('Age');
@@ -61,9 +57,7 @@ describe('Table Conversion Tests', () => {
   describe('Colspan/Rowspan Table Conversion', () => {
     test('should handle colspan and rowspan attributes gracefully', async () => {
       const html = await loadFixture('colspan-rowspan-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       expect(markdown).toContain('Quarter 1');
       expect(markdown).toContain('Quarter 2');
@@ -80,9 +74,7 @@ describe('Table Conversion Tests', () => {
   describe('Nested Table Conversion', () => {
     test('should handle nested tables appropriately', async () => {
       const html = await loadFixture('nested-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       expect(markdown).toContain('Department');
       expect(markdown).toContain('Details');
@@ -101,9 +93,7 @@ describe('Table Conversion Tests', () => {
   describe('Mixed Content Table Conversion', () => {
     test('should preserve links, images, and code within table cells', async () => {
       const html = await loadFixture('mixed-content-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       // Should preserve links
       expect(markdown).toMatch(/\[.*Auth Guide.*\]/);
@@ -124,9 +114,7 @@ describe('Table Conversion Tests', () => {
   describe('Styled Table Conversion', () => {
     test('should handle CSS classes and inline styles', async () => {
       const html = await loadFixture('styled-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       expect(markdown).toContain('Product');
       expect(markdown).toContain('Price');
@@ -145,9 +133,7 @@ describe('Table Conversion Tests', () => {
   describe('Empty Table Conversion', () => {
     test('should handle empty tables gracefully', async () => {
       const html = await loadFixture('empty-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       // Should contain the descriptive headings
       expect(markdown).toContain('Completely Empty Table');
@@ -168,9 +154,7 @@ describe('Table Conversion Tests', () => {
   describe('Malformed Table Conversion', () => {
     test('should handle malformed tables without crashing', async () => {
       const html = await loadFixture('malformed-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       // Should contain descriptive headings
       expect(markdown).toContain('Missing Closing Tags');
@@ -190,9 +174,7 @@ describe('Table Conversion Tests', () => {
   describe('Complex Table Conversion', () => {
     test('should handle complex tables with multiple features', async () => {
       const html = await loadFixture('complex-table.html');
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       
       // Should contain caption
       expect(markdown).toContain('Quarterly Sales Report');
@@ -238,9 +220,7 @@ describe('Table Conversion Tests', () => {
       
       for (const fixture of fixtures) {
         const html = await loadFixture(fixture);
-        const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+        const markdown = await getProcessedMarkdown(html, 'http://example.com');
         
         // All conversions should produce valid output
         expect(markdown).toBeDefined();
@@ -261,9 +241,7 @@ describe('Table Conversion Tests', () => {
       const html = await loadFixture('complex-table.html');
       
       const startTime = Date.now();
-      const markdown = await getProcessedMarkdown(html, 'http://example.com', {
-        preserveTableStructure: true
-      });
+      const markdown = await getProcessedMarkdown(html, 'http://example.com');
       const endTime = Date.now();
       
       const processingTime = endTime - startTime;
