@@ -335,15 +335,22 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
             turndownService.addRule('tableCell', {
                 filter: ['th', 'td'],
                 replacement: function (content, node, options) {
-                    // Clean content and remove excessive whitespace
-                    content = content.trim().replace(/\n+/g, ' ').replace(/\s+/g, ' ');
+                    // Convert HTML content to markdown first, then clean
+                    let cleanContent = turndownService.turndown(node.innerHTML || '');
+                    
+                    // Clean up line breaks and excessive whitespace
+                    cleanContent = cleanContent
+                        .replace(/\n+/g, ' ')          // Replace newlines with spaces
+                        .replace(/\s+/g, ' ')          // Normalize multiple spaces to single space
+                        .replace(/\|\s*/g, '\\| ')     // Escape pipe characters
+                        .trim();
                     
                     // If content is empty, use a space to maintain table structure
-                    if (!content) {
-                        content = ' ';
+                    if (!cleanContent) {
+                        cleanContent = ' ';
                     }
                     
-                    return content;
+                    return cleanContent;
                 }
             });
 
@@ -359,9 +366,18 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
                         return '';
                     }
                     
-                    // Convert each cell and join with pipes
+                    // Convert each cell using our enhanced cell processing
                     const cellContents = cells.map(cell => {
-                        const cellContent = turndownService.turndown(cell.innerHTML || '').trim();
+                        // Process cell content through turndown and clean it
+                        let cellContent = turndownService.turndown(cell.innerHTML || '');
+                        
+                        // Clean up line breaks and excessive whitespace for table cells
+                        cellContent = cellContent
+                            .replace(/\n+/g, ' ')          // Replace newlines with spaces
+                            .replace(/\s+/g, ' ')          // Normalize multiple spaces
+                            .replace(/\|\s*/g, '\\| ')     // Escape pipe characters
+                            .trim();
+                        
                         return cellContent || ' ';
                     });
                     
@@ -405,9 +421,17 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
                             return;
                         }
                         
-                        // Convert each cell
+                        // Convert each cell with proper line break handling
                         const cellContents = cells.map(cell => {
-                            const cellContent = turndownService.turndown(cell.innerHTML || '').trim();
+                            let cellContent = turndownService.turndown(cell.innerHTML || '');
+                            
+                            // Clean up line breaks and excessive whitespace for table cells
+                            cellContent = cellContent
+                                .replace(/\n+/g, ' ')          // Replace newlines with spaces
+                                .replace(/\s+/g, ' ')          // Normalize multiple spaces
+                                .replace(/\|\s*/g, '\\| ')     // Escape pipe characters
+                                .trim();
+                            
                             return cellContent || ' ';
                         });
                         
