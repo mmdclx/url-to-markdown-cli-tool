@@ -54,40 +54,22 @@ npm install -g .
 - **Node.js** 18.0.0 or higher
 - **Google Chrome or Chromium** browser installed and accessible in PATH
 
-Chrome/Chromium will be automatically detected. If you don't have Chrome installed:
-
-**macOS:**
-```bash
-brew install --cask google-chrome
-```
-**Windows:**
-Download from [https://www.google.com/chrome/](https://www.google.com/chrome/)
-
-## Quick Start
-
-```bash
-# Convert a webpage to markdown file
-url-to-md https://example.com -o example.md
-
-# Output to console
-url-to-md https://news.ycombinator.com
-
-# Get help
-url-to-md --help
-```
+Chrome/Chromium will be automatically detected.
 
 ## Usage
 
-### Basic Conversion
 ```bash
 # Convert a webpage to markdown file
 url-to-md https://example.com -o example.md
 
-# Output to console (stdout)
-url-to-md https://news.ycombinator.com
+# Smart content cleaning - removes nav, footer, aside, script, style, header, noscript, canvas
+url-to-md https://blog.example.com --clean-content -o clean-blog.md
 
-# Convert with custom wait time for dynamic content
-url-to-md https://spa-app.com --wait 3.0 -o spa-content.md
+# Output to console
+url-to-md https://example.com
+
+# Get help
+url-to-md --help
 ```
 
 ### Content Filtering
@@ -128,16 +110,13 @@ url-to-md https://example.com --viewport-width 1200 --viewport-height 800 -o cus
 # Debug with visible browser to see content loading
 url-to-md https://dynamic-site.com --show-browser --wait 5.0
 
-# Maximum cleanup for LLM processing
-url-to-md https://article.com \\
-  --clean-content \\
-  --no-images \\
-  --no-links \\
-  --wait 3.0 \\
+# Maximum cleanup
+url-to-md https://article.com \
+  --clean-content \
+  --no-images \
+  --no-links \
+  --wait 3.0 \
   -o clean-article.md
-
-# Process single-page applications (SPAs)
-url-to-md https://react-app.com --wait 5.0 --show-browser
 
 # Disable web security for difficult sites (use with caution)
 url-to-md https://cors-protected-site.com --disable-web-security
@@ -151,30 +130,8 @@ for url in $(cat urls.txt); do
   url-to-md "$url" -o "output/$(basename $url).md" || echo "Failed: $url"
 done
 
-# Use in npm scripts
-{
-  "scripts": {
-    "fetch-docs": "url-to-md https://docs.api.com --no-images -o docs/api.md"
-  }
-}
 
-### Pipeline Integration
-
-```bash
-# Convert multiple URLs and combine
-cat urls.txt | while read url; do
-  url-to-md "$url" --no-images --no-links
-  echo -e "\\n---\\n"
-done > combined-content.md
-
-# Extract specific content for AI training
-url-to-md https://wikipedia.org/wiki/Machine_Learning \\
-  --no-images \\
-  --remove-tags nav footer sidebar \\
-  -o training-data/ml-article.md
-```
-
-## Command Line Options
+## Full command Line Options
 
 ```
 Usage: url-to-md [options] <url>
@@ -187,14 +144,14 @@ Arguments:
 Options:
   -V, --version                    output the version number
   -o, --output <file>              Write output to file instead of stdout
-  --wait <seconds>                 Seconds to wait for page to load (default: 1.5)
-  --show-browser                   Show browser window (visible mode)
-  --no-images                      Remove images from the output
   --no-links                       Remove webpage links from the output
+  --no-images                      Remove images from the output
   --no-gif-images                  Remove GIF images from the output  
   --no-svg-images                  Remove SVG images from the output
-  --remove-tags <tags...>          Remove specific HTML tags (e.g., --remove-tags div span)
   --clean-content                  Remove common non-content tags (nav, footer, aside, script, style, header, noscript, canvas)
+  --remove-tags <tags...>          Remove specific HTML tags (e.g., --remove-tags div span)
+  --wait <seconds>                 Seconds to wait for page to load (default: 1.5)
+  --show-browser                   Show browser window (visible mode)
   --mobile                         Use mobile viewport (375x667 - iPhone)
   --tablet                         Use tablet viewport (768x1024 - iPad portrait)
   --desktop                        Use desktop viewport (1920x1080 - standard desktop)
@@ -224,20 +181,7 @@ Many modern websites use **JavaScript to load content dynamically** after the in
    url-to-md https://dynamic-site.com --show-browser --wait 5.0
    ```
 
-3. **Try different wait times** - some sites may need longer:
-   ```bash
-   # For very slow sites, try waiting up to 10 seconds
-   url-to-md https://slow-site.com --wait 10.0
-   ```
-
 ### Common Issues
-
-#### "Chrome/Chromium not found"
-```bash
-# Install Chrome (see Installation section above)
-# Or if Chrome is installed but not in PATH:
-export CHROME_EXECUTABLE_PATH="/path/to/chrome"
-```
 
 #### "Permission denied" errors
 ```bash
@@ -273,24 +217,8 @@ url-to-md https://example.com --wait 10.0
 - **Documentation Sites**: Convert existing content to markdown-based docs
 - **Static Site Generation**: Process dynamic content for static sites
 
-## Install from Source
+**Perfect for:** RAG systems, LLM training data preparation, documentation extraction, table data extraction, and any workflow that needs clean, structured text from web content.
 
-To install directly from this repository:
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/url-to-markdown-cli-tool.git
-cd url-to-markdown-cli-tool
-
-# Install dependencies
-npm install
-
-# Install globally
-npm install -g .
-
-# Test the CLI
-url-to-md --help
-```
 
 ## Acknowledgments
 
@@ -301,4 +229,3 @@ url-to-md --help
 
 ---
 
-**Perfect for:** RAG systems, LLM training data preparation, documentation extraction, table data extraction, and any workflow that needs clean, structured text from web content.
