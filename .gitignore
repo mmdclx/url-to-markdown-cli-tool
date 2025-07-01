@@ -32,6 +32,7 @@ node_modules/
 # Environment variables
 .env
 .mcp.json
+PRD.md
 # Editor directories and files
 .idea
 .vscode
