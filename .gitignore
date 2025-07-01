@@ -31,6 +31,7 @@ dev-debug.log
 node_modules/
 # Environment variables
 .env
+.mcp.json
 # Editor directories and files
 .idea
 .vscode
