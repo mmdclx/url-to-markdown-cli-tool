@@ -7,7 +7,6 @@
 
 const { Command } = require('commander');
 const fs = require('fs').promises;
-const path = require('path');
 const { getPageSource } = require('./lib/pageFetcher');
 const { getProcessedMarkdown } = require('./lib/markdownProcessor');
 
