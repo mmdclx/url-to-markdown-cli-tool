@@ -140,6 +140,7 @@ function main() {
         });
 
     // Parse command line arguments
+    program.showHelpAfterError();
     program.parse();
 }
 
