@@ -17,14 +17,14 @@ This implementation follows **Git Commit Strategy checkpoints** rather than sequ
   - Add help text and examples for the new flag
   - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 2. Implement include-tags filtering function in markdown processor
+- [x] 2. Implement include-tags filtering function in markdown processor
   - Create `filterToIncludeTags()` function in src/lib/markdownProcessor.js
   - Extract content from specified HTML tags using Cheerio selectors
   - Handle multiple instances of the same tag type
   - Return filtered Cheerio object or empty document if no matches found
   - _Requirements: 1.1, 1.2, 1.3, 3.3_
 
-- [ ] 3. Integrate include-tags processing into main conversion pipeline
+- [x] 3. Integrate include-tags processing into main conversion pipeline
   - Modify `getProcessedMarkdown()` function to accept includeTags option
   - Apply include-tags filtering before existing remove-tags processing
   - Ensure proper interaction between include-tags and remove-tags functionality
@@ -44,7 +44,7 @@ This implementation follows **Git Commit Strategy checkpoints** rather than sequ
   - Implement graceful fallback to full document processing on errors
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 6. Connect CLI arguments to markdown processor
+- [x] 6. Connect CLI arguments to markdown processor
   - Pass include-tags array from CLI options to getProcessedMarkdown function
   - Update the options object construction in src/index.js run() function
   - Ensure proper data flow from command line to processing logic

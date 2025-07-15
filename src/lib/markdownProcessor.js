@@ -142,6 +142,42 @@ function postProcessMarkdown(markdownText) {
 }
 
 /**
+ * Filter HTML content to include only specified tags and their content.
+ * This function extracts content from specified HTML tags, preserving hierarchy and nesting.
+ * 
+ * @param {CheerioStatic} $ - Cheerio instance with loaded HTML
+ * @param {Array<string>} includeTags - Array of HTML tag names to include
+ * @returns {CheerioStatic} Filtered Cheerio object with only included content
+ */
+function filterToIncludeTags($, includeTags) {
+    if (!includeTags || includeTags.length === 0) {
+        return $; // No filtering, return original
+    }
+    
+    // Create new document with only included content
+    const filteredContent = [];
+    
+    includeTags.forEach(tag => {
+        $(tag).each((index, element) => {
+            filteredContent.push($(element).clone());
+        });
+    });
+    
+    if (filteredContent.length === 0) {
+        // No matching tags found, return empty document
+        return cheerio.load('<body></body>');
+    }
+    
+    // Create new document with filtered content
+    const newDoc = cheerio.load('<body></body>');
+    filteredContent.forEach(content => {
+        newDoc('body').append(content);
+    });
+    
+    return newDoc;
+}
+
+/**
  * Process HTML source and convert to clean, LLM-friendly markdown.
  * 
  * @param {string} pageSource - HTML source text
@@ -155,6 +191,7 @@ function postProcessMarkdown(markdownText) {
  * @param {boolean} [options.removeScriptTag=true] - Remove script tags
  * @param {boolean} [options.removeStyleTag=true] - Remove style tags
  * @param {Array<string>} [options.removeTags=[]] - Additional HTML tags to remove
+ * @param {Array<string>} [options.includeTags] - HTML tags to include (filters content to only these tags)
  * @param {boolean} [options.preserveTableStructure=false] - Enable enhanced table formatting
  * @returns {Promise<string>} Clean markdown text ready for LLM processing
  * @throws {Error} If there's an error while processing the HTML
@@ -169,12 +206,18 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
         removeScriptTag = true,
         removeStyleTag = true,
         removeTags = [],
+        includeTags = [],
         preserveTableStructure = true
     } = options;
 
     try {
         // Load HTML with Cheerio
-        const $ = cheerio.load(pageSource);
+        let $ = cheerio.load(pageSource);
+        
+        // Apply include-tags filtering first (if specified)
+        if (includeTags && includeTags.length > 0) {
+            $ = filterToIncludeTags($, includeTags);
+        }
         
         // Build list of tags to remove
         const tagsToRemove = [];
