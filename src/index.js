@@ -45,7 +45,8 @@ async function run(options) {
             keepWebpageLinks: options.links !== false,
             removeGifImage: options.gifImages === false,
             removeSvgImage: options.svgImages === false,
-            removeTags: tagsToRemove
+            removeTags: tagsToRemove,
+            includeTags: options.includeTags
         });
 
         // Output result
@@ -79,6 +80,7 @@ function main() {
         .option('--no-gif-images', 'Remove GIF images from the output')
         .option('--no-svg-images', 'Remove SVG images from the output')
         .option('--clean-content', 'Remove common non-content tags (nav, footer, aside, script, style, header, noscript, canvas)')
+        .option('--include-tags <tags...>', 'Include only specific HTML tags and their content (e.g., --include-tags article main section)')
         .option('--remove-tags <tags...>', 'Remove specific HTML tags from the output (e.g., --remove-tags div span button)')
         .option('--wait <seconds>', 'Seconds to wait for the page to load', parseFloat, 1.5)
         .option('--show-browser', 'Show the browser window (visible mode)', false)
@@ -100,6 +102,12 @@ function main() {
             // Validate wait time
             if (options.wait < 0) {
                 console.error('Error: Wait time must be non-negative');
+                process.exit(1);
+            }
+
+            // Validate include-tags option
+            if (options.includeTags !== undefined && (!Array.isArray(options.includeTags) || options.includeTags.length === 0)) {
+                console.error('Error: --include-tags requires at least one tag name');
                 process.exit(1);
             }
 
