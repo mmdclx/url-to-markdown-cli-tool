@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Article Content Test</title>
+</head>
+<body>
+    <!-- Navigation that should be excluded -->
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header that should be excluded -->
+    <header>
+        <h1>Site Header</h1>
+        <p>Welcome to our website</p>
+    </header>
+
+    <!-- Main article content that should be included -->
+    <article>
+        <h1>Understanding Web Scraping</h1>
+        <p>Web scraping is the process of extracting data from websites. It involves making HTTP requests to web pages and parsing the HTML content to extract specific information.</p>
+        
+        <h2>Common Use Cases</h2>
+        <ul>
+            <li>Data collection for research</li>
+            <li>Price monitoring</li>
+            <li>Content aggregation</li>
+        </ul>
+
+        <h2>Best Practices</h2>
+        <p>When scraping websites, it's important to:</p>
+        <ol>
+            <li>Respect robots.txt files</li>
+            <li>Implement rate limiting</li>
+            <li>Handle errors gracefully</li>
+        </ol>
+
+        <blockquote>
+            "The key to successful web scraping is understanding the structure of the target website."
+        </blockquote>
+    </article>
+
+    <!-- Sidebar that should be excluded -->
+    <aside>
+        <h3>Related Articles</h3>
+        <ul>
+            <li><a href="/article1">Article 1</a></li>
+            <li><a href="/article2">Article 2</a></li>
+        </ul>
+    </aside>
+
+    <!-- Footer that should be excluded -->
+    <footer>
+        <p>&copy; 2023 Example Website. All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nested Structure Test</title>
+</head>
+<body>
+    <!-- Header that should be excluded -->
+    <header>
+        <h1>Website Header</h1>
+    </header>
+
+    <!-- Main content with nested sections -->
+    <main>
+        <h1>Main Content with Nested Elements</h1>
+        
+        <!-- Nested article within main -->
+        <article>
+            <h2>Nested Article in Main</h2>
+            <p>This article is nested inside the main tag.</p>
+            
+            <!-- Nested section within article -->
+            <section>
+                <h3>Nested Section in Article</h3>
+                <p>This section is nested inside the article, which is inside main.</p>
+                
+                <!-- Nested div with content -->
+                <div>
+                    <h4>Content Block</h4>
+                    <p>This is a content block with <strong>bold text</strong> and <em>italic text</em>.</p>
+                    <ul>
+                        <li>Nested list item 1</li>
+                        <li>Nested list item 2</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Another nested section -->
+            <section>
+                <h3>Another Nested Section</h3>
+                <blockquote>
+                    This is a quote within a nested section inside an article inside main.
+                </blockquote>
+            </section>
+        </article>
+
+        <!-- Direct section in main (not nested in article) -->
+        <section>
+            <h2>Direct Section in Main</h2>
+            <p>This section is directly inside main, not nested in an article.</p>
+            
+            <!-- Navigation within section (should be included if section is included) -->
+            <nav>
+                <h4>Section Navigation</h4>
+                <ul>
+                    <li><a href="#section1">Section 1</a></li>
+                    <li><a href="#section2">Section 2</a></li>
+                </ul>
+            </nav>
+        </section>
+    </main>
+
+    <!-- Standalone article outside main -->
+    <article>
+        <h2>Standalone Article</h2>
+        <p>This article is not nested inside main.</p>
+        
+        <!-- Footer within article (should be included if article is included) -->
+        <footer>
+            <p>Article footer content</p>
+        </footer>
+    </article>
+
+    <!-- Page footer that should be excluded -->
+    <footer>
+        <p>Page footer - should be excluded</p>
+    </footer>
+</body>
+</html>
