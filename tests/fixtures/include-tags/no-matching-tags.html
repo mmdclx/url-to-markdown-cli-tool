@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>No Matching Tags Test</title>
+</head>
+<body>
+    <!-- This page has no article, main, or section tags -->
+    <!-- Used to test error handling when no matching tags are found -->
+    
+    <header>
+        <h1>Page Without Target Tags</h1>
+        <p>This page is designed to test error handling when no matching tags are found.</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <div class="content">
+        <h2>Content in Generic Div</h2>
+        <p>All the content on this page is contained in generic HTML elements like div, header, nav, and footer.</p>
+        
+        <div class="subsection">
+            <h3>Subsection</h3>
+            <p>This is a subsection with some text content.</p>
+            <ul>
+                <li>List item 1</li>
+                <li>List item 2</li>
+                <li>List item 3</li>
+            </ul>
+        </div>
+
+        <div class="another-section">
+            <h3>Another Section</h3>
+            <p>This is another section of content, but it's in a div, not a semantic section tag.</p>
+            <blockquote>
+                "This quote is also in a generic div structure."
+            </blockquote>
+        </div>
+    </div>
+
+    <aside>
+        <h3>Sidebar Content</h3>
+        <p>This sidebar content is in an aside tag, but not in article, main, or section.</p>
+    </aside>
+
+    <footer>
+        <p>&copy; 2023 Test Page. No semantic content tags present.</p>
+    </footer>
+</body>
+</html>
