@@ -6,6 +6,7 @@ No LLM or API keys required.
 
 **Key features:**
 - 🔄 Convert any webpage to properly formatted markdown with headers, links, and structure
+- 🎯 **Targeted content extraction** - Include only specific HTML tags like articles, main content, or sections
 - 🧹 **Smart content cleaning** - Remove navigation, footers, scripts and other non-content elements
 - 🚫 Remove images, links, or specific HTML tags as needed
 - 📊 **Enhanced table conversion** - HTML tables become clean markdown tables with pipes and headers
@@ -72,6 +73,37 @@ url-to-md https://example.com
 url-to-md --help
 ```
 
+### Targeted Content Extraction
+```bash
+# Extract only article content (perfect for news sites and blogs)
+url-to-md https://news-site.com --include-tags article -o article.md
+
+# Extract main content areas (common for documentation and blogs)
+url-to-md https://blog.com --include-tags main section article -o content.md
+
+# Combine targeted extraction with cleanup (remove ads within articles)
+url-to-md https://news.com --include-tags article --remove-tags aside nav -o clean-article.md
+
+# Extract specific sections from documentation
+url-to-md https://docs.example.com --include-tags main section -o docs.md
+```
+
+#### How Include-Tags and Remove-Tags Work Together
+
+The `--include-tags` and `--remove-tags` flags can be combined for powerful content filtering:
+
+1. **Include-tags first**: Only content within specified tags is processed
+2. **Remove-tags second**: Specified tags are removed from the included content
+3. **Priority rule**: If a tag appears in both lists, include-tags takes precedence
+
+```bash
+# Example: Extract article content but remove ads and navigation within it
+url-to-md https://news-site.com \
+  --include-tags article \
+  --remove-tags aside nav .advertisement \
+  -o clean-article.md
+```
+
 ### Content Filtering
 ```bash
 # Smart content cleaning - removes nav, footer, aside, script, style, header, noscript, canvas
@@ -110,13 +142,21 @@ url-to-md https://example.com --viewport-width 1200 --viewport-height 800 -o cus
 # Debug with visible browser to see content loading
 url-to-md https://dynamic-site.com --show-browser --wait 5.0
 
-# Maximum cleanup
+# Maximum cleanup with targeted extraction
 url-to-md https://article.com \
+  --include-tags article main \
   --clean-content \
   --no-images \
   --no-links \
   --wait 3.0 \
   -o clean-article.md
+
+# Extract article content with mobile viewport (great for responsive sites)
+url-to-md https://news-site.com \
+  --include-tags article \
+  --mobile \
+  --clean-content \
+  -o mobile-article.md
 
 # Disable web security for difficult sites (use with caution)
 url-to-md https://cors-protected-site.com --disable-web-security
@@ -149,6 +189,7 @@ Options:
   --no-gif-images                  Remove GIF images from the output  
   --no-svg-images                  Remove SVG images from the output
   --clean-content                  Remove common non-content tags (nav, footer, aside, script, style, header, noscript, canvas)
+  --include-tags <tags...>         Include only specific HTML tags and their content (e.g., --include-tags article main section)
   --remove-tags <tags...>          Remove specific HTML tags (e.g., --remove-tags div span)
   --wait <seconds>                 Seconds to wait for page to load (default: 1.5)
   --show-browser                   Show browser window (visible mode)
