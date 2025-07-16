@@ -5,8 +5,8 @@
 This implementation follows **Git Commit Strategy checkpoints** rather than sequential task order for better functional milestones:
 
 - **Checkpoint 1** ✅: Task 1 (CLI Foundation)
-- **Checkpoint 2**: Tasks 2, 3, 6 (Core Functionality) 
-- **Checkpoint 3**: Tasks 4, 5 (Robust Implementation)
+- **Checkpoint 2** ✅: Tasks 2, 3, 6 (Core Functionality) 
+- **Checkpoint 3** ✅: Tasks 4, 5 (Robust Implementation)
 - **Checkpoint 4**: Tasks 7, 8, 9, 10, 11, 12 (Production Ready)
 
 ## Tasks
@@ -44,7 +44,7 @@ This implementation follows **Git Commit Strategy checkpoints** rather than sequ
   - Implement graceful fallback to full document processing on errors
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 6. Connect CLI arguments to markdown processor
+- [x] 6. Connect CLI arguments to markdown processor
   - Pass include-tags array from CLI options to getProcessedMarkdown function
   - Update the options object construction in src/index.js run() function
   - Ensure proper data flow from command line to processing logic
