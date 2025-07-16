@@ -45,47 +45,47 @@ This implementation follows **Git Commit Strategy checkpoints** rather than sequ
   - _Requirements: 3.1, 3.2, 3.3_
 
 - [x] 6. Connect CLI arguments to markdown processor
-  - Pass include-tags array from CLI options to getProcessedMarkdown function
+  - Pass include-tags array from CLI options to getProcessedMarkdown funtion
   - Update the options object construction in src/index.js run() function
   - Ensure proper data flow from command line to processing logic
   - _Requirements: 1.1, 1.4_
 
-- [ ] 7. Create comprehensive test fixtures for include-tags scenarios
+- [x] 7. Create comprehensive test fixtures for include-tags scenarios
   - Create HTML fixture files with article, main, section, and other common tags
   - Create fixtures with multiple instances of the same tag
   - Create fixtures with nested tag structures
   - Create fixtures with no matching tags for error testing
   - _Requirements: 1.1, 1.2, 1.3, 3.3_
 
-- [ ] 8. Write unit tests for include-tags filtering function
+- [x] 8. Write unit tests for include-tags filtering function
   - Test single tag inclusion functionality
   - Test multiple tag inclusion functionality
   - Test behavior when no matching tags are found
   - Test proper content extraction and hierarchy preservation
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 9. Write integration tests for include-tags and remove-tags interaction
+- [x] 9. Write integration tests for include-tags and remove-tags interaction
   - Test include-tags with remove-tags combination scenarios
   - Test tag priority resolution when same tag appears in both lists
   - Test remove-tags filtering within included content scope
   - Test edge cases with nested and conflicting tag specifications
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-- [ ] 10. Write CLI integration tests for include-tags flag
+- [x] 10. Write CLI integration tests for include-tags flag
   - Test command-line argument parsing for include-tags flag
   - Test error handling for invalid include-tags inputs
   - Test help text display includes include-tags documentation
   - Test end-to-end CLI functionality with include-tags flag
   - _Requirements: 4.1, 4.2, 4.3, 3.1_
 
-- [ ] 11. Add comprehensive error handling tests
+- [x] 11. Add comprehensive error handling tests
   - Test empty include-tags list validation and error messages
   - Test no matching content scenarios with appropriate warnings
   - Test graceful degradation when include-tags processing fails
   - Test invalid tag name handling
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 12. Update help documentation and examples
+- [x] 12. Update help documentation and examples
   - Add include-tags flag to CLI help output with clear examples
   - Document interaction between include-tags and remove-tags flags
   - Add usage examples showing common use cases like article extraction
