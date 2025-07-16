@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiple Instances Test</title>
+</head>
+<body>
+    <!-- Header that should be excluded -->
+    <header>
+        <h1>Blog with Multiple Articles</h1>
+    </header>
+
+    <!-- Navigation that should be excluded -->
+    <nav>
+        <a href="/">Home</a> | <a href="/archive">Archive</a>
+    </nav>
+
+    <!-- First article instance -->
+    <article>
+        <h2>First Blog Post</h2>
+        <p>This is the content of the first blog post. It contains information about web development.</p>
+        <p>Published on <time datetime="2023-11-15">November 15, 2023</time></p>
+        <ul>
+            <li>Point 1 about web development</li>
+            <li>Point 2 about best practices</li>
+        </ul>
+    </article>
+
+    <!-- Second article instance -->
+    <article>
+        <h2>Second Blog Post</h2>
+        <p>This is the content of the second blog post. It discusses database optimization techniques.</p>
+        <p>Published on <time datetime="2023-11-20">November 20, 2023</time></p>
+        <ol>
+            <li>Index optimization</li>
+            <li>Query performance</li>
+            <li>Connection pooling</li>
+        </ol>
+        <blockquote>
+            "Database optimization is crucial for application performance."
+        </blockquote>
+    </article>
+
+    <!-- Third article instance -->
+    <article>
+        <h2>Third Blog Post</h2>
+        <p>This is the content of the third blog post about API design patterns.</p>
+        <p>Published on <time datetime="2023-11-25">November 25, 2023</time></p>
+        <table>
+            <tr>
+                <th>Pattern</th>
+                <th>Use Case</th>
+            </tr>
+            <tr>
+                <td>REST</td>
+                <td>Standard web APIs</td>
+            </tr>
+            <tr>
+                <td>GraphQL</td>
+                <td>Flexible data queries</td>
+            </tr>
+        </table>
+    </article>
+
+    <!-- Sidebar that should be excluded -->
+    <aside>
+        <h3>Recent Comments</h3>
+        <ul>
+            <li>Great article! - John</li>
+            <li>Very helpful - Sarah</li>
+        </ul>
+    </aside>
+
+    <!-- Footer that should be excluded -->
+    <footer>
+        <p>Blog footer content</p>
+    </footer>
+</body>
+</html>
