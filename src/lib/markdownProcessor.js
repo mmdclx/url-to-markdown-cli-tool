@@ -148,33 +148,42 @@ function postProcessMarkdown(markdownText) {
  * @param {CheerioStatic} $ - Cheerio instance with loaded HTML
  * @param {Array<string>} includeTags - Array of HTML tag names to include
  * @returns {CheerioStatic} Filtered Cheerio object with only included content
+ * @throws {Error} If include-tags processing fails
  */
 function filterToIncludeTags($, includeTags) {
     if (!includeTags || includeTags.length === 0) {
         return $; // No filtering, return original
     }
     
-    // Create new document with only included content
-    const filteredContent = [];
-    
-    includeTags.forEach(tag => {
-        $(tag).each((index, element) => {
-            filteredContent.push($(element).clone());
+    try {
+        // Create new document with only included content
+        const filteredContent = [];
+        
+        includeTags.forEach(tag => {
+            $(tag).each((index, element) => {
+                filteredContent.push($(element).clone());
+            });
         });
-    });
-    
-    if (filteredContent.length === 0) {
-        // No matching tags found, return empty document
-        return cheerio.load('<body></body>');
+        
+        if (filteredContent.length === 0) {
+            // No matching tags found, log warning and return empty document
+            console.warn(`Warning: No content found matching the specified include-tags: [${includeTags.join(', ')}]`);
+            return cheerio.load('<body></body>');
+        }
+        
+        // Create new document with filtered content
+        const newDoc = cheerio.load('<body></body>');
+        filteredContent.forEach(content => {
+            newDoc('body').append(content);
+        });
+        
+        return newDoc;
+        
+    } catch (error) {
+        // If include-tags processing fails, log warning and fall back to original document
+        console.warn(`Warning: Include-tags processing failed (${error.message}), falling back to full document processing`);
+        return $;
     }
-    
-    // Create new document with filtered content
-    const newDoc = cheerio.load('<body></body>');
-    filteredContent.forEach(content => {
-        newDoc('body').append(content);
-    });
-    
-    return newDoc;
 }
 
 /**
@@ -229,9 +238,15 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
         }
         tagsToRemove.push(...removeTags);
         
-        // Remove unwanted tags
+        // Apply tag priority resolution: include-tags takes precedence over remove-tags
+        // If a tag appears in both lists, it should be included (not removed)
         const uniqueTagsToRemove = [...new Set(tagsToRemove)];
-        uniqueTagsToRemove.forEach(tag => {
+        const finalTagsToRemove = includeTags && includeTags.length > 0 
+            ? uniqueTagsToRemove.filter(tag => !includeTags.includes(tag))
+            : uniqueTagsToRemove;
+        
+        // Remove unwanted tags (respecting include-tags priority)
+        finalTagsToRemove.forEach(tag => {
             try {
                 $(tag).remove();
             } catch (error) {

@@ -23,7 +23,7 @@ This implementation follows **Git Commit Strategy checkpoints** rather than sequ
   - Handle multiple instances of the same tag type
   - Return filtered Cheerio object or empty document if no matches found
   - _Requirements: 1.1, 1.2, 1.3, 3.3_
-
+Í
 - [x] 3. Integrate include-tags processing into main conversion pipeline
   - Modify `getProcessedMarkdown()` function to accept includeTags option
   - Apply include-tags filtering before existing remove-tags processing
@@ -31,20 +31,20 @@ This implementation follows **Git Commit Strategy checkpoints** rather than sequ
   - Maintain backward compatibility with existing function signature
   - _Requirements: 2.1, 2.2, 2.4_
 
-- [ ] 4. Implement tag priority resolution logic
+- [x] 4. Implement tag priority resolution logic
   - Handle cases where tags appear in both include-tags and remove-tags lists
   - Ensure include-tags takes precedence over remove-tags for the same tag
   - Apply remove-tags filtering to child elements within included content
   - _Requirements: 2.3, 2.4_
 
-- [ ] 5. Add error handling and validation
+- [x] 5. Add error handling and validation
   - Add validation for empty include-tags list with appropriate error message
   - Handle cases where no matching tags are found on the page
   - Add warning messages for no content scenarios
   - Implement graceful fallback to full document processing on errors
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [x] 6. Connect CLI arguments to markdown processor
+- [ ] 6. Connect CLI arguments to markdown processor
   - Pass include-tags array from CLI options to getProcessedMarkdown function
   - Update the options object construction in src/index.js run() function
   - Ensure proper data flow from command line to processing logic
