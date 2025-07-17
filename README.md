@@ -169,9 +169,9 @@ for url in $(cat urls.txt); do
   echo "Processing: $url"
   url-to-md "$url" -o "output/$(basename $url).md" || echo "Failed: $url"
 done
+```
 
-
-## Full command Line Options
+## Full Command Line Options
 
 ```
 Usage: url-to-md [options] <url>
