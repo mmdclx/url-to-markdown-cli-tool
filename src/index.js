@@ -72,7 +72,7 @@ function main() {
     program
         .name('url-to-md')
         .description('Fetch URL content and output LLM-friendly markdown')
-        .version('1.0.1')
+        .version('1.1.0')
         .argument('<url>', 'URL to fetch')
         .option('-o, --output <file>', 'Write output to file instead of stdout')
         .option('--no-links', 'Remove webpage links from the output')
