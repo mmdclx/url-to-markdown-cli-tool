@@ -105,27 +105,7 @@ Examples:
     $ url-to-md https://news.com --include-tags article --remove-tags aside nav
 
   Extract content and save to file:
-    $ url-to-md https://example.com --include-tags main -o content.md
-
-  Clean extraction with mobile viewport:
-    $ url-to-md https://site.com --include-tags article --clean-content --mobile
-
-Tag Filtering:
-  --include-tags: Specifies which HTML tags to include in the conversion.
-                  Only content within these tags will be processed.
-                  
-  --remove-tags:  Removes specific tags from the output. When used with
-                  --include-tags, removes tags within the included content.
-                  
-  Priority:       If a tag appears in both --include-tags and --remove-tags,
-                  --include-tags takes precedence and the tag is included.
-
-Common Use Cases:
-  News articles:     --include-tags article
-  Blog posts:        --include-tags main article
-  Documentation:     --include-tags main section
-  Product pages:     --include-tags main --remove-tags aside nav
-  Clean extraction:  --include-tags article --clean-content`)
+    $ url-to-md https://example.com --include-tags main -o content.md`)
         .action(async (url, options) => {
             // Validate URL
             try {
