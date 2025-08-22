@@ -13,6 +13,7 @@ No LLM or API keys required.
 - 📱 **Viewport control** - Mobile, tablet, desktop viewports for responsive content extraction
 - ⏱️ Configurable wait times for dynamic content and SPAs
 - 👁️ Headless or visible browser modes for debugging
+- 🔑 Manual login for protected pages
 - 📦 Easy npm installation with global CLI access
 - 🧠 Clean output optimized for LLM parsing and understanding
 - ⚡ Fast Node.js implementation with Puppeteer browser automation
@@ -160,6 +161,12 @@ url-to-md https://news-site.com \
 
 # Disable web security for difficult sites (use with caution)
 url-to-md https://cors-protected-site.com --disable-web-security
+
+# Pause for manual login then capture page
+url-to-md https://members-only.com \
+  --show-browser \
+  --pause-after-load
+
 ```
 
 ### Batch Processing & Automation
@@ -199,6 +206,7 @@ Options:
   --viewport-width <width>         Set viewport width in pixels (320-1920, default: 375)
   --viewport-height <height>       Set viewport height in pixels (568-1080, default: 667)
   --disable-web-security           Disable web security (CORS) - use with caution for difficult sites
+  --pause-after-load               Pause after page load and wait for ENTER
   -h, --help                       display help for command
 ```
 

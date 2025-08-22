@@ -23,7 +23,8 @@ async function run(options) {
             showBrowser: options.showBrowser,
             disableWebSecurity: options.disableWebSecurity,
             viewportWidth: options.viewportWidth,
-            viewportHeight: options.viewportHeight
+            viewportHeight: options.viewportHeight,
+            pauseAfterLoad: options.pauseAfterLoad
         });
 
         if (!pageSource) {
@@ -90,6 +91,7 @@ function main() {
         .option('--viewport-width <width>', 'Set viewport width in pixels (320-1920)', (value) => parseInt(value, 10), 375)
         .option('--viewport-height <height>', 'Set viewport height in pixels (568-1080)', (value) => parseInt(value, 10), 667)
         .option('--disable-web-security', 'Disable web security (CORS) - use with caution for difficult sites', false)
+        .option('--pause-after-load', 'Pause after page load and wait for ENTER', false)
         .addHelpText('after', `
 Examples:
   Basic usage:
