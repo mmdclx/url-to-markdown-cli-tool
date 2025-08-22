@@ -30,7 +30,8 @@ async function getPageSource(url, options = {}) {
         disableWebSecurity = false,
         userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
         viewportWidth = 375,
-        viewportHeight = 667
+        viewportHeight = 667,
+        pauseAfterLoad = false
     } = options;
 
     // Validate viewport dimensions
@@ -63,18 +64,30 @@ async function getPageSource(url, options = {}) {
         });
 
         const page = await browser.newPage();
-        
+
         // Set viewport with configurable dimensions (defaults to mobile-first)
         await page.setViewport({ width: viewportWidth, height: viewportHeight });
-        
+
         // Set user agent
         await page.setUserAgent(userAgent);
-        
+
         // Navigate to the URL and wait for DOM content to load
-        await page.goto(url, { 
+        await page.goto(url, {
             waitUntil: 'domcontentloaded',
             timeout: 30000 // 30 second timeout
         });
+
+        // Pause for manual authentication if enabled
+        if (pauseAfterLoad) {
+            console.log('Manual login enabled - complete authentication then press ENTER...');
+            await new Promise(resolve => {
+                process.stdin.resume();
+                process.stdin.once('data', () => {
+                    process.stdin.pause();
+                    resolve();
+                });
+            });
+        }
         
         // Wait for the specified time (equivalent to Python's implicit wait)
         if (wait > 0) {
