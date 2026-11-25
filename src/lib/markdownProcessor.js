@@ -9,136 +9,20 @@ const cheerio = require('cheerio');
 const TurndownService = require('turndown');
 const { URL } = require('url');
 
-/**
- * Add proper spacing between HTML elements to prevent text concatenation issues.
- * This function ensures that adjacent elements have appropriate whitespace between them.
- * 
- * @param {CheerioStatic} $ - Cheerio instance with loaded HTML
- */
-function addSpacingBetweenElements($) {
-    // Define block-level elements that should have line breaks between them
-    const blockElements = [
-        'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
-        'section', 'article', 'header', 'main', 'footer',
-        'li', 'dd', 'dt', 'blockquote', 'pre',
-        'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'
-    ];
-    
-    // Define inline elements that should have spaces between them
-    const inlineElements = [
-        'span', 'a', 'strong', 'b', 'em', 'i', 'small',
-        'code', 'label', 'button'
-    ];
-    
-    // Add line breaks after block elements (if not already present)
-    blockElements.forEach(tag => {
-        $(tag).each((index, element) => {
-            const $element = $(element);
-            const nextSibling = $element.next();
-            
-            // If there's a next sibling and no whitespace between them
-            if (nextSibling.length && !hasWhitespaceAfter($element)) {
-                // Insert a line break
-                $element.after('\n');
-            }
-        });
-    });
-    
-    // Add spaces between inline elements that are adjacent
-    inlineElements.forEach(tag => {
-        $(tag).each((index, element) => {
-            const $element = $(element);
-            const nextSibling = $element.next();
-            
-            // If next sibling exists and is also an inline element or text
-            if (nextSibling.length && !hasWhitespaceAfter($element)) {
-                const nextTagName = nextSibling.prop('tagName');
-                if (nextTagName && (inlineElements.includes(nextTagName.toLowerCase()) || nextSibling.is(':contains'))) {
-                    // Insert a space
-                    $element.after(' ');
-                }
-            }
-        });
-    });
-    
-    // Special handling for list items - ensure they end with line breaks
-    $('li').each((index, element) => {
-        const $li = $(element);
-        if (!$li.html().endsWith('\n')) {
-            $li.append('\n');
-        }
-    });
+function resolveUrl(value, baseUrl) {
+    try {
+        return new URL(value, baseUrl).href;
+    } catch {
+        return value;
+    }
 }
 
-/**
- * Check if an element has whitespace (spaces, tabs, newlines) after it.
- * 
- * @param {Cheerio} $element - Cheerio element to check
- * @returns {boolean} True if there's whitespace after the element
- */
-function hasWhitespaceAfter($element) {
-    const nextNode = $element[0].nextSibling;
-    if (nextNode && nextNode.type === 'text') {
-        return /^\s/.test(nextNode.data);
+function backtickFence(code, minimum) {
+    let length = minimum;
+    for (const run of code.matchAll(/`+/g)) {
+        length = Math.max(length, run[0].length + 1);
     }
-    return false;
-}
-
-/**
- * Post-process markdown text to fix common spacing and readability issues.
- * This function cleans up the converted markdown to ensure proper formatting.
- * 
- * @param {string} markdownText - Raw markdown text from TurndownService
- * @returns {string} Cleaned and properly formatted markdown text
- */
-function postProcessMarkdown(markdownText) {
-    // Split into lines for processing
-    const lines = markdownText.split('\n');
-    const cleanedLines = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const trimmedLine = line.trim();
-        
-        // Skip excessive blank lines but preserve document structure
-        if (trimmedLine || (cleanedLines.length > 0 && cleanedLines[cleanedLines.length - 1].trim())) {
-            // Fix common spacing issues within the line
-            let processedLine = line;
-            
-            // Fix missing spaces after punctuation followed by capital letters
-            processedLine = processedLine.replace(/([.!?])([A-Z])/g, '$1 $2');
-            
-            // Fix percentage/number concatenation (e.g., "20%Increased" -> "20% Increased")
-            processedLine = processedLine.replace(/(\d+%?)([A-Z][a-z])/g, '$1 $2');
-            
-            // Fix common corporate suffix concatenations only
-            processedLine = processedLine.replace(/([a-z])(Logo|Inc|Corp|Ltd|LLC)(\s|$)/g, '$1 $2$3');
-            
-            cleanedLines.push(processedLine);
-        }
-    }
-    
-    // Join lines and perform final cleanup
-    let result = cleanedLines.join('\n').trim();
-    
-    // Remove excessive consecutive newlines (more than 2)
-    result = result.replace(/\n{3,}/g, '\n\n');
-    
-    // Fix spacing around headers
-    result = result.replace(/\n(#{1,6}\s)/g, '\n\n$1');
-    result = result.replace(/(#{1,6}[^\n]+)\n([^\n#])/g, '$1\n\n$2');
-    
-    // Fix spacing around list items
-    result = result.replace(/\n(\*|\+|-|\d+\.)\s/g, '\n\n$1 ');
-    
-    // Clean up excessive spaces
-    result = result.replace(/ {3,}/g, '  '); // Reduce excessive spaces to max 2
-    result = result.replace(/\t+/g, '  '); // Convert tabs to 2 spaces
-    
-    // Final trim
-    result = result.trim();
-    
-    return result;
+    return '`'.repeat(length);
 }
 
 /**
@@ -254,162 +138,114 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
             }
         });
         
-        // Add proper spacing between elements to prevent text concatenation
-        addSpacingBetweenElements($);
-        
-        // Process images
-        const removeImageTypeList = [];
-        if (removeSvgImage) {
-            removeImageTypeList.push('.svg');
-        }
-        if (removeGifImage) {
-            removeImageTypeList.push('.gif');
-        }
-        removeImageTypeList.push(...removeImageTypes);
-        const uniqueRemoveImageTypes = [...new Set(removeImageTypeList)];
-        
+        // Normalize image sources before handing the elements to Turndown.
+        const imageTypesToRemove = [...removeImageTypes];
+        if (removeSvgImage) imageTypesToRemove.push('.svg');
+        if (removeGifImage) imageTypesToRemove.push('.gif');
+
         $('img').each((index, element) => {
-            try {
-                const $img = $(element);
-                
-                if (!keepImages) {
-                    $img.remove();
-                } else {
-                    const imageLink = $img.attr('src');
-                    if (typeof imageLink === 'string') {
-                        // Check if image type should be removed
-                        const shouldRemove = uniqueRemoveImageTypes.some(imgType => 
-                            imageLink.includes(imgType)
-                        );
-                        
-                        if (shouldRemove) {
-                            $img.remove();
-                        } else {
-                            // Convert relative URLs to absolute
-                            let fullUrl;
-                            try {
-                                fullUrl = new URL(imageLink, baseUrl).href;
-                            } catch (urlError) {
-                                // If URL construction fails, use original
-                                fullUrl = imageLink;
-                            }
-                            
-                            const altText = $img.attr('alt') || 'Image';
-                            // Create proper markdown image syntax
-                            $img.replaceWith(`![${altText}](${fullUrl})`);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.warn('Error while processing image:', error.message);
+            const image = $(element);
+            const src = image.attr('src');
+            if (!keepImages || imageTypesToRemove.some(type => src?.includes(type))) {
+                image.remove();
+            } else if (src) {
+                image.attr('src', resolveUrl(src, baseUrl));
             }
         });
-        
-        // Process links
-        if (!keepWebpageLinks) {
-            // Remove all links and replace with their text content
-            $('a').each((index, element) => {
-                try {
-                    const $link = $(element);
-                    const linkText = $link.text().trim();
-                    $link.replaceWith(linkText);
-                } catch (error) {
-                    console.warn('Error while processing link:', error.message);
-                }
-            });
-        } else {
-            // Convert relative URLs to absolute
-            $('a[href]').each((index, element) => {
-                try {
-                    const $link = $(element);
-                    const href = $link.attr('href');
-                    
-                    let linkUrl;
-                    try {
-                        linkUrl = new URL(href, baseUrl).href;
-                    } catch (urlError) {
-                        // If URL construction fails, use original
-                        linkUrl = href;
-                    }
-                    
-                    $link.attr('href', linkUrl);
-                } catch (error) {
-                    console.warn('Error while processing link:', error.message);
-                }
-            });
-        }
 
-        // Configure TurndownService with enhanced spacing settings
+        $('a').each((index, element) => {
+            const link = $(element);
+            const href = link.attr('href');
+            if (!keepWebpageLinks) {
+                link.replaceWith(link.contents());
+            } else if (href !== undefined) {
+                link.attr('href', resolveUrl(href, baseUrl));
+            }
+        });
+
+        $('pre').each((index, element) => {
+            const first = element.children[0];
+            if (first?.type === 'text' && first.data.startsWith('\n')) {
+                // Cheerio already dropped the HTML opening newline. Keep the next parse from dropping another.
+                $(element).prepend('<!---->');
+            }
+        });
+
+        const renderCodeBlock = (_content, node) => {
+            const code = node.textContent;
+            const language = node.firstElementChild?.getAttribute('class')
+                ?.match(/(?:^|\s)language-([^\s`]+)/)?.[1] ?? '';
+            const fence = backtickFence(code, 3);
+            const end = code.endsWith('\n') ? '' : '\n';
+            return `\n\n${fence}${language}\n${code}${end}${fence}\n\n`;
+        };
+
+        const renderInlineCode = (_content, node) => {
+            const code = node.textContent.replace(/\r\n?|\n/g, ' ');
+            if (!code) return '';
+            const fence = backtickFence(code, 1);
+            // Markdown strips one space from both ends of padded, non-blank code spans.
+            const padding = /(^`|`$|^ .*[^ ].* $)/.test(code) ? ' ' : '';
+            return `${fence}${padding}${code}${padding}${fence}`;
+        };
+
+        const listNumbers = new WeakMap();
+        const renderListItem = (content, node, options) => {
+            let marker = options.bulletListMarker;
+            const list = node.parentNode;
+            if (list.nodeName === 'OL') {
+                const start = Number.parseInt(list.getAttribute('start'), 10);
+                const number = listNumbers.get(list) ?? (Number.isNaN(start) ? 1 : start);
+                listNumbers.set(list, number + 1);
+                marker = `${number}.`;
+            }
+
+            const prefix = `${marker} `;
+            const indentation = ' '.repeat(prefix.length);
+            const body = content.replace(/^\n+|\n+$/g, '').replace(/\n(?=.)/g, `\n${indentation}`);
+            return prefix + body + (node.nextElementSibling ? '\n' : '');
+        };
+
         const turndownService = new TurndownService({
             headingStyle: 'atx',
-            codeBlockStyle: 'fenced',
+            preformattedCode: true,
             emDelimiter: '*',
-            strongDelimiter: '**',
-            linkStyle: 'inlined',
-            linkReferenceStyle: 'full',
-            blankReplacement: function (content, node) {
-                // Add spaces for empty elements that should have spacing
-                return node.isBlock ? '\n\n' : ' ';
+            blankReplacement: (content, node, options) => {
+                if (node.nodeName === 'PRE') return renderCodeBlock(content, node);
+                if (node.nodeName === 'CODE') return renderInlineCode(content, node);
+                if (node.nodeName === 'LI') return renderListItem(content, node, options);
+                return node.isBlock ? '\n\n' : '';
             }
         });
 
-        // Configure TurndownService rules for better spacing and formatting
-        
-        // Add custom rule for better spacing between inline elements
-        turndownService.addRule('improvedSpacing', {
-            filter: ['span', 'div'],
-            replacement: function (content, node, options) {
-                // If content is empty or just whitespace, add appropriate spacing
-                if (!content.trim()) {
-                    return node.isBlock ? '\n\n' : ' ';
-                }
-                
-                // For block elements, ensure they end with proper spacing
-                if (node.isBlock) {
-                    return content.trim() + '\n\n';
-                }
-                
-                // For inline elements, ensure they have space separation
-                return content.trim() + ' ';
-            }
-        });
+        turndownService.addRule('preformattedBlock', { filter: 'pre', replacement: renderCodeBlock });
+        turndownService.addRule('inlineCode', { filter: 'code', replacement: renderInlineCode });
+        turndownService.addRule('listItem', { filter: 'li', replacement: renderListItem });
 
-        // Custom rule for list items to ensure proper formatting
-        turndownService.addRule('betterLists', {
-            filter: ['li'],
-            replacement: function (content, node, options) {
-                content = content
-                    .replace(/^\n+/, '') // remove leading newlines
-                    .replace(/\n+$/, '\n') // replace trailing newlines with a single one
-                    .replace(/\n/gm, '\n    '); // indent
-                
-                var prefix = options.bulletListMarker + '   ';
-                return prefix + content + (node.nextSibling && !/\n$/.test(content) ? '\n' : '');
+        turndownService.addRule('image', {
+            filter: 'img',
+            replacement: (_content, node) => {
+                const src = node.getAttribute('src');
+                if (!src) return '';
+
+                const alt = turndownService.escape((node.getAttribute('alt') ?? 'Image').replace(/\s*[\r\n]+\s*/g, ' '));
+                const destination = src.replace(/([()])/g, '\\$1');
+                const title = node.getAttribute('title')?.replace(/\s*[\r\n]+\s*/g, ' ').replace(/[\\"]/g, '\\$&');
+                const titlePart = title ? ` "${title}"` : '';
+                return `![${alt}](${destination}${titlePart})`;
             }
         });
 
         // Add enhanced table conversion rules if requested
         if (preserveTableStructure) {
+            const convertCell = (cell) => turndownService.turndown(cell.innerHTML)
+                .replace(/\n+/g, ' ')
+                .replace(/\|/g, '\\|')
+                .trim() || ' ';
+
             turndownService.addRule('tableCell', {
                 filter: ['th', 'td'],
-                replacement: function (content, node, options) {
-                    // Convert HTML content to markdown first, then clean
-                    let cleanContent = turndownService.turndown(node.innerHTML || '');
-                    
-                    // Clean up line breaks and excessive whitespace
-                    cleanContent = cleanContent
-                        .replace(/\n+/g, ' ')          // Replace newlines with spaces
-                        .replace(/\s+/g, ' ')          // Normalize multiple spaces to single space
-                        .replace(/\|\s*/g, '\\| ')     // Escape pipe characters
-                        .trim();
-                    
-                    // If content is empty, use a space to maintain table structure
-                    if (!cleanContent) {
-                        cleanContent = ' ';
-                    }
-                    
-                    return cleanContent;
-                }
+                replacement: (_content, node) => convertCell(node)
             });
 
             turndownService.addRule('tableRow', {
@@ -424,21 +260,8 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
                         return '';
                     }
                     
-                    // Convert each cell using our enhanced cell processing
-                    const cellContents = cells.map(cell => {
-                        // Process cell content through turndown and clean it
-                        let cellContent = turndownService.turndown(cell.innerHTML || '');
-                        
-                        // Clean up line breaks and excessive whitespace for table cells
-                        cellContent = cellContent
-                            .replace(/\n+/g, ' ')          // Replace newlines with spaces
-                            .replace(/\s+/g, ' ')          // Normalize multiple spaces
-                            .replace(/\|\s*/g, '\\| ')     // Escape pipe characters
-                            .trim();
-                        
-                        return cellContent || ' ';
-                    });
-                    
+                    const cellContents = cells.map(convertCell);
+
                     return '| ' + cellContents.join(' | ') + ' |\n';
                 }
             });
@@ -479,20 +302,8 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
                             return;
                         }
                         
-                        // Convert each cell with proper line break handling
-                        const cellContents = cells.map(cell => {
-                            let cellContent = turndownService.turndown(cell.innerHTML || '');
-                            
-                            // Clean up line breaks and excessive whitespace for table cells
-                            cellContent = cellContent
-                                .replace(/\n+/g, ' ')          // Replace newlines with spaces
-                                .replace(/\s+/g, ' ')          // Normalize multiple spaces
-                                .replace(/\|\s*/g, '\\| ')     // Escape pipe characters
-                                .trim();
-                            
-                            return cellContent || ' ';
-                        });
-                        
+                        const cellContents = cells.map(convertCell);
+
                         tableMarkdown += '| ' + cellContents.join(' | ') + ' |\n';
                         
                         // Add header separator after first row if it contains headers
@@ -523,13 +334,7 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
             throw new Error('No HTML content to convert');
         }
         
-        // Convert to markdown
-        let markdownText = turndownService.turndown(htmlToConvert);
-        
-        // Enhanced post-processing to fix spacing and readability issues
-        markdownText = postProcessMarkdown(markdownText);
-        
-        return markdownText;
+        return turndownService.turndown(htmlToConvert);
 
     } catch (error) {
         throw new Error(`Error while processing HTML to markdown: ${error.message}`);
