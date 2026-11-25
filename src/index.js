@@ -8,7 +8,7 @@
 const { Command } = require('commander');
 const fs = require('fs').promises;
 const { parseWebUrl } = require('./lib/browserProxy');
-const { getPageSource } = require('./lib/pageFetcher');
+const { fetchPage } = require('./lib/pageFetcher');
 const { getProcessedMarkdown } = require('./lib/markdownProcessor');
 
 /**
@@ -18,7 +18,7 @@ const { getProcessedMarkdown } = require('./lib/markdownProcessor');
 async function run(options) {
     try {
         // Fetch page source
-        const pageSource = await getPageSource(options.url, {
+        const { html, baseUrl } = await fetchPage(options.url, {
             wait: options.wait,
             headless: !options.showBrowser,
             showBrowser: options.showBrowser,
@@ -27,8 +27,8 @@ async function run(options) {
             viewportHeight: options.viewportHeight
         });
 
-        if (!pageSource) {
-            throw new Error('Failed to fetch the page. Ensure Chrome/Chromium is installed.');
+        if (!html) {
+            throw new Error('Fetched page has no HTML content');
         }
 
         // Build list of tags to remove
@@ -41,7 +41,7 @@ async function run(options) {
         }
 
         // Process HTML to markdown
-        const processed = await getProcessedMarkdown(pageSource, options.url, {
+        const processed = await getProcessedMarkdown(html, baseUrl, {
             keepImages: options.images !== false,
             keepWebpageLinks: options.links !== false,
             removeGifImage: options.gifImages === false,

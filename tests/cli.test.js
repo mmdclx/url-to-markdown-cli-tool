@@ -15,6 +15,12 @@ const fixtureServer = createServer((request, response) => {
     request.socket.destroy();
   } else if (request.url === '/redirect') {
     response.writeHead(302, { Location: restrictedOrigin }).end();
+  } else if (request.url === '/old-article') {
+    response.writeHead(302, { Location: '/docs/chapter/' }).end();
+  } else if (request.url === '/docs/chapter/' || request.url === '/base-url') {
+    response.setHeader('Content-Type', 'text/html');
+    const base = request.url === '/base-url' ? '<base href="/assets/">' : '';
+    response.end(`${base}<main><a href="Next.API#Install">Next</a><img src="Diagram.png" alt="Diagram"></main>`);
   } else if (request.url === '/subresources') {
     response.setHeader('Content-Type', 'text/html');
     response.end(`<h1>Fixture</h1><img src="${restrictedOrigin}"><script src="/fixture.js"></script>`);
@@ -120,6 +126,19 @@ describe('Browser access policy', () => {
     expect(result.code).toBe(0);
     expect(result.stdout).toContain('Fixture script loaded');
     expect(restrictedRequest).not.toHaveBeenCalled();
+  }, 10000);
+});
+
+describe('Link resolution', () => {
+  test.each([
+    ['/old-article', '/docs/chapter/'],
+    ['/base-url', '/assets/']
+  ])('uses the document base URL when converting %s', async (pathname, basePath) => {
+    const result = await runFixtureCli(['--include-tags', 'main'], pathname);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain(`[Next](${fixtureOrigin}${basePath}Next.API#Install)`);
+    expect(result.stdout).toContain(`![Diagram](${fixtureOrigin}${basePath}Diagram.png)`);
   }, 10000);
 });
 

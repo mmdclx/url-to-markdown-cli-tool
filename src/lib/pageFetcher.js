@@ -9,7 +9,7 @@ const puppeteer = require('puppeteer');
 const { parseWebUrl, startBrowserProxy } = require('./browserProxy');
 
 /**
- * Get HTML source using Puppeteer.
+ * Capture a page and its document base URL using Puppeteer.
  * 
  * @param {string} url - The URL from which HTML content is to be extracted
  * @param {Object} options - Configuration options
@@ -20,10 +20,10 @@ const { parseWebUrl, startBrowserProxy } = require('./browserProxy');
  * @param {boolean} [options.allowPrivateNetwork=false] - Allow private or loopback addresses for the requested origin
  * @param {number} [options.viewportWidth=375] - Viewport width in pixels (320-1920)
  * @param {number} [options.viewportHeight=667] - Viewport height in pixels (568-1080)
- * @returns {Promise<string>} HTML source code of the page
+ * @returns {Promise<{html: string, baseUrl: string}>} HTML and base URL from the same document
  * @throws {Error} If there's an error while fetching the page
  */
-async function getPageSource(url, options = {}) {
+async function fetchPage(url, options = {}) {
     const {
         wait = 1.5,
         headless = true,
@@ -99,8 +99,14 @@ async function getPageSource(url, options = {}) {
             console.warn('Page load timeout, continuing with partial content');
         }
         
-        // Get the full HTML source
-        return await page.content();
+        return await page.evaluate(() => {
+            const serializer = new XMLSerializer();
+            let html = '';
+            for (const node of document.childNodes) {
+                html += node === document.documentElement ? node.outerHTML : serializer.serializeToString(node);
+            }
+            return { html, baseUrl: document.baseURI };
+        });
 
     } catch (error) {
         throw new Error(`Error while fetching page: ${error.message}`, { cause: error });
@@ -113,6 +119,11 @@ async function getPageSource(url, options = {}) {
     }
 }
 
+async function getPageSource(url, options) {
+    return (await fetchPage(url, options)).html;
+}
+
 module.exports = {
+    fetchPage,
     getPageSource
 };
