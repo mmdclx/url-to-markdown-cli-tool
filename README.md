@@ -52,10 +52,10 @@ npm install -g .
 
 ### System Requirements
 
-- **Node.js** 18.0.0 or higher
-- **Google Chrome or Chromium** browser installed and accessible in PATH
+- **Node.js** 22.12.0 or higher
+- **Chrome for Testing**, downloaded by Puppeteer during installation
 
-Chrome/Chromium will be automatically detected.
+Set `PUPPETEER_EXECUTABLE_PATH` to use a compatible Chrome installation instead.
 
 ## Usage
 

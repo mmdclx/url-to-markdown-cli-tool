@@ -28,7 +28,7 @@ async function getPageSource(url, options = {}) {
         headless = true,
         showBrowser = false,
         disableWebSecurity = false,
-        userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        userAgent,
         viewportWidth = 375,
         viewportHeight = 667
     } = options;
@@ -58,7 +58,7 @@ async function getPageSource(url, options = {}) {
         }
         
         browser = await puppeteer.launch({
-            headless: isHeadless ? 'new' : false,
+            headless: isHeadless,
             args
         });
 
@@ -68,7 +68,9 @@ async function getPageSource(url, options = {}) {
         await page.setViewport({ width: viewportWidth, height: viewportHeight });
         
         // Set user agent
-        await page.setUserAgent(userAgent);
+        if (userAgent) {
+            await page.setUserAgent({ userAgent });
+        }
         
         // Navigate to the URL and wait for DOM content to load
         await page.goto(url, { 

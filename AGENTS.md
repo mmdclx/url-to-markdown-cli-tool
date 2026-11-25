@@ -12,6 +12,6 @@ Structure
 - `tests/`: Jest tests with fixtures in `tests/fixtures/`.
 
 Tech
-- Node.js >= 18.
+- Node.js >= 22.12.
 - Core deps: puppeteer, cheerio, turndown, commander.
 - Tests: jest (`npm test`).

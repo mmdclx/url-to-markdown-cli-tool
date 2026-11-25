@@ -33,16 +33,16 @@
     "url": "https://github.com/mmdclx/url-to-markdown-cli-tool/issues"
   },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12",
+    "cheerio": "^1.2.0",
     "commander": "^12.0.0",
-    "puppeteer": "^23.0.0",
+    "puppeteer": "^25.18.1",
     "turndown": "^7.2.0"
   },
   "devDependencies": {
     "jest": "^29.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   },
   "files": [
     "src/index.js",
