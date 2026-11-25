@@ -165,6 +165,9 @@ url-to-md http://localhost:3000 --allow-private-network
 The browser accepts HTTP(S) URLs and blocks non-public destinations by default, including for redirects and subresources. `--allow-private-network` permits private or loopback addresses only for the requested origin. Link-local and reserved addresses remain blocked. Use a worker with OS-level network isolation if you expose this CLI to untrusted users.
 
 ### Batch Processing & Automation
+
+An HTTP 4xx or 5xx response for the main page exits with status 1 and reports the status and URL on stderr.
+
 ```bash
 # Batch processing with error handling
 for url in $(cat urls.txt); do

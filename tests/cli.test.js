@@ -21,6 +21,17 @@ const fixtureServer = createServer((request, response) => {
     response.setHeader('Content-Type', 'text/html');
     const base = request.url === '/base-url' ? '<base href="/assets/">' : '';
     response.end(`${base}<main><a href="Next.API#Install">Next</a><img src="Diagram.png" alt="Diagram"></main>`);
+  } else if (request.url === '/missing' || request.url === '/unavailable') {
+    const status = request.url === '/missing' ? 404 : 503;
+    response.writeHead(status, { 'Content-Type': 'text/html' }).end('<h1>Request failed</h1>');
+  } else if (request.url === '/redirect-to-missing') {
+    response.writeHead(302, { Location: '/missing' }).end();
+  } else if (request.url === '/client-redirect-to-missing') {
+    response.setHeader('Content-Type', 'text/html');
+    response.end('<script>setTimeout(() => { location.href = "/missing"; }, 25)</script>');
+  } else if (request.url === '/missing-image') {
+    response.setHeader('Content-Type', 'text/html');
+    response.end('<h1>Page available</h1><img src="/missing" alt="Missing image">');
   } else if (request.url === '/subresources') {
     response.setHeader('Content-Type', 'text/html');
     response.end(`<h1>Fixture</h1><img src="${restrictedOrigin}"><script src="/fixture.js"></script>`);
@@ -139,6 +150,28 @@ describe('Link resolution', () => {
     expect(result.code).toBe(0);
     expect(result.stdout).toContain(`[Next](${fixtureOrigin}${basePath}Next.API#Install)`);
     expect(result.stdout).toContain(`![Diagram](${fixtureOrigin}${basePath}Diagram.png)`);
+  }, 10000);
+});
+
+describe('HTTP errors', () => {
+  test.each([
+    ['/missing', 404, '/missing'],
+    ['/unavailable', 503, '/unavailable'],
+    ['/redirect-to-missing', 404, '/missing'],
+    ['/client-redirect-to-missing', 404, '/missing']
+  ])('exits nonzero when %s leads to HTTP %i', async (pathname, status, errorPath) => {
+    const result = await runFixtureCli(['--wait', '0.5'], pathname);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain(`HTTP ${status} for ${fixtureOrigin}${errorPath}`);
+    expect(result.stdout).toBe('');
+  }, 10000);
+
+  test('still converts a successful page with a failed image request', async () => {
+    const result = await runFixtureCli([], '/missing-image');
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('# Page available');
   }, 10000);
 });
 

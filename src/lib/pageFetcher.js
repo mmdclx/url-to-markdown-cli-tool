@@ -8,6 +8,13 @@
 const puppeteer = require('puppeteer');
 const { parseWebUrl, startBrowserProxy } = require('./browserProxy');
 
+function throwForHttpError(response) {
+    const status = response?.status();
+    if (status >= 400) {
+        throw new Error(`HTTP ${status} for ${response.url()}`);
+    }
+}
+
 /**
  * Capture a page and its document base URL using Puppeteer.
  * 
@@ -77,11 +84,22 @@ async function fetchPage(url, options = {}) {
             await page.setUserAgent({ userAgent });
         }
         
-        // Navigate to the URL and wait for DOM content to load
-        await page.goto(targetUrl.href, {
-            waitUntil: 'domcontentloaded',
-            timeout: 30000 // 30 second timeout
+        let documentResponse;
+        page.on('response', (response) => {
+            const request = response.request();
+            if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+                documentResponse = response;
+            }
         });
+
+        try {
+            await page.goto(targetUrl.href, {
+                waitUntil: 'domcontentloaded',
+                timeout: 30000
+            });
+        } finally {
+            throwForHttpError(documentResponse);
+        }
         
         // Wait for the specified time (equivalent to Python's implicit wait)
         if (wait > 0) {
@@ -99,7 +117,9 @@ async function fetchPage(url, options = {}) {
             console.warn('Page load timeout, continuing with partial content');
         }
         
-        return await page.evaluate(() => {
+        // A client-side redirect can replace the main document while the page loads.
+        throwForHttpError(documentResponse);
+        const captured = await page.evaluate(() => {
             const serializer = new XMLSerializer();
             let html = '';
             for (const node of document.childNodes) {
@@ -107,6 +127,8 @@ async function fetchPage(url, options = {}) {
             }
             return { html, baseUrl: document.baseURI };
         });
+        throwForHttpError(documentResponse);
+        return captured;
 
     } catch (error) {
         throw new Error(`Error while fetching page: ${error.message}`, { cause: error });
