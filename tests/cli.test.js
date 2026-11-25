@@ -1,5 +1,49 @@
 const path = require('path');
 const { spawn } = require('child_process');
+const { once } = require('node:events');
+const { readFileSync } = require('node:fs');
+const { createServer } = require('node:http');
+
+const fixtureHtml = readFileSync(path.join(__dirname, 'fixtures/include-tags/article-content.html'));
+const restrictedRequest = jest.fn((_request, response) => response.end('Other fixture'));
+const restrictedServer = createServer(restrictedRequest);
+let fixtureOrigin;
+let restrictedOrigin;
+
+const fixtureServer = createServer((request, response) => {
+  if (request.url === '/disconnect') {
+    request.socket.destroy();
+  } else if (request.url === '/redirect') {
+    response.writeHead(302, { Location: restrictedOrigin }).end();
+  } else if (request.url === '/subresources') {
+    response.setHeader('Content-Type', 'text/html');
+    response.end(`<h1>Fixture</h1><img src="${restrictedOrigin}"><script src="/fixture.js"></script>`);
+  } else if (request.url === '/fixture.js') {
+    response.setHeader('Content-Type', 'text/javascript');
+    response.end('document.querySelector("h1").textContent = "Fixture script loaded";');
+  } else {
+    response.setHeader('Content-Type', 'text/html');
+    if (request.url === '/slow') {
+      setTimeout(() => response.end(fixtureHtml), 300);
+    } else {
+      response.end(fixtureHtml);
+    }
+  }
+});
+
+async function listen(server) {
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  return `http://127.0.0.1:${server.address().port}`;
+}
+
+beforeAll(async () => {
+  [fixtureOrigin, restrictedOrigin] = await Promise.all([listen(fixtureServer), listen(restrictedServer)]);
+});
+
+afterAll(async () => {
+  await Promise.all([fixtureServer, restrictedServer].map((server) => new Promise((resolve) => server.close(resolve))));
+});
 
 function runCli(args = []) {
   return new Promise((resolve) => {
@@ -24,6 +68,10 @@ function runCli(args = []) {
   });
 }
 
+function runFixtureCli(args = [], pathname = '/html') {
+  return runCli([fixtureOrigin + pathname, '--allow-private-network', '--wait', '0', ...args]);
+}
+
 describe('CLI Argument Validation', () => {
   test('running without arguments exits with error and shows help', async () => {
     const result = await runCli();
@@ -34,30 +82,63 @@ describe('CLI Argument Validation', () => {
   });
 
   test('conflicting viewport options exits with error', async () => {
-    const result = await runCli(['http://example.com', '--mobile', '--desktop']);
+    const result = await runFixtureCli(['--mobile', '--desktop']);
     expect(result.code).not.toBe(0);
     expect(result.stderr).toMatch(/only one viewport preset/i);
   });
 });
 
+describe('Browser access policy', () => {
+  test('accepts only web URLs', async () => {
+    const result = await runCli(['file:///example.html']);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('Only HTTP and HTTPS URLs are supported');
+  });
+
+  test('rejects the removed web security flag', async () => {
+    const result = await runCli([fixtureOrigin, '--disable-web-security']);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("unknown option '--disable-web-security'");
+  });
+
+  test('requires explicit opt-in for loopback origins', async () => {
+    const result = await runCli([fixtureOrigin]);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('Blocked browser destination');
+  });
+
+  test('does not extend the local opt-in to another origin through a redirect', async () => {
+    restrictedRequest.mockClear();
+    const result = await runFixtureCli([], '/redirect');
+    expect(result.code).toBe(1);
+    expect(restrictedRequest).not.toHaveBeenCalled();
+  }, 10000);
+
+  test('loads same-origin subresources and blocks other local origins', async () => {
+    restrictedRequest.mockClear();
+    const result = await runFixtureCli(['--no-images'], '/subresources');
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('Fixture script loaded');
+    expect(restrictedRequest).not.toHaveBeenCalled();
+  }, 10000);
+});
+
 describe('Include Tags CLI Integration', () => {
   describe('Command-line argument parsing', () => {
     test('accepts single include-tags argument', async () => {
-      // Mock a simple HTTP server response to avoid network dependency
-      const result = await runCli(['http://httpbin.org/html', '--include-tags', 'article']);
+      const result = await runFixtureCli(['--include-tags', 'article']);
       // Should not fail due to argument parsing (may fail due to network/processing)
       expect(result.stderr).not.toMatch(/--include-tags requires at least one tag name/);
     }, 10000);
 
     test('accepts multiple include-tags arguments', async () => {
-      const result = await runCli(['http://httpbin.org/html', '--include-tags', 'article', 'main', 'section']);
+      const result = await runFixtureCli(['--include-tags', 'article', 'main', 'section']);
       // Should not fail due to argument parsing
       expect(result.stderr).not.toMatch(/--include-tags requires at least one tag name/);
     }, 10000);
 
     test('works with other flags combined', async () => {
-      const result = await runCli([
-        'http://httpbin.org/html', 
+      const result = await runFixtureCli([
         '--include-tags', 'article', 
         '--remove-tags', 'nav', 'footer',
         '--no-images'
@@ -69,7 +150,7 @@ describe('Include Tags CLI Integration', () => {
 
   describe('Error handling for invalid inputs', () => {
     test('empty include-tags flag shows error', async () => {
-      const result = await runCli(['http://example.com', '--include-tags']);
+      const result = await runFixtureCli(['--include-tags']);
       expect(result.code).not.toBe(0);
       // Commander.js shows its own error message for missing arguments
       expect(result.stderr).toMatch(/argument missing/);
@@ -78,7 +159,7 @@ describe('Include Tags CLI Integration', () => {
     test('include-tags with empty string is processed as tag name', async () => {
       // When an empty string is passed, Commander treats it as a valid tag name
       // This test verifies the behavior - it should process but likely find no content
-      const result = await runCli(['http://example.com', '--include-tags', '']);
+      const result = await runFixtureCli(['--include-tags', '']);
       expect(result.code).not.toBe(0);
       // Should show warning about no content found for the empty tag name
       expect(result.stderr).toMatch(/No content found|No HTML content to convert/);
@@ -87,7 +168,7 @@ describe('Include Tags CLI Integration', () => {
     test('include-tags validation error shows appropriate message', async () => {
       // Test the CLI validation for empty include-tags array
       // This would happen if Commander somehow passes an empty array
-      const result = await runCli(['http://example.com', '--include-tags', '']);
+      const result = await runFixtureCli(['--include-tags', '']);
       expect(result.code).not.toBe(0);
       // Should show error about invalid URL or no content found
       expect(result.stderr).toMatch(/Invalid URL provided|No content found|No HTML content to convert/);
@@ -95,7 +176,7 @@ describe('Include Tags CLI Integration', () => {
 
     test('invalid tag names are processed without CLI errors', async () => {
       // CLI should accept any string as tag names and let the processor handle validation
-      const result = await runCli(['http://httpbin.org/html', '--include-tags', 'invalid@tag', '123tag', 'tag!']);
+      const result = await runFixtureCli(['--include-tags', 'invalid@tag', '123tag', 'tag!']);
       
       // Should not fail due to CLI argument validation
       // May fail due to no matching content, but that's processor-level, not CLI-level
@@ -107,7 +188,7 @@ describe('Include Tags CLI Integration', () => {
 
     test('very long tag names are accepted by CLI', async () => {
       const longTagName = 'a'.repeat(1000);
-      const result = await runCli(['http://httpbin.org/html', '--include-tags', longTagName]);
+      const result = await runFixtureCli(['--include-tags', longTagName]);
       
       // Should not fail due to CLI argument validation
       if (result.code !== 0) {
@@ -117,7 +198,7 @@ describe('Include Tags CLI Integration', () => {
     }, 10000);
 
     test('special characters in tag names are accepted by CLI', async () => {
-      const result = await runCli(['http://httpbin.org/html', '--include-tags', 'tag@#$', 'tag!', 'tag%']);
+      const result = await runFixtureCli(['--include-tags', 'tag@#$', 'tag!', 'tag%']);
       
       // Should not fail due to CLI argument validation
       if (result.code !== 0) {
@@ -132,13 +213,13 @@ describe('Include Tags CLI Integration', () => {
       test('CLI validates empty include-tags array correctly', async () => {
         // This test simulates what happens when Commander.js might pass an empty array
         // In practice, this is hard to trigger from command line, but we test the validation logic
-        const result = await runCli(['http://example.com', '--include-tags']);
+        const result = await runFixtureCli(['--include-tags']);
         expect(result.code).not.toBe(0);
         expect(result.stderr).toMatch(/argument missing|error: option.*requires argument/i);
       });
 
       test('CLI handles whitespace-only tag names', async () => {
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', '   ', '\t']);
+        const result = await runFixtureCli(['--include-tags', '   ', '\t']);
         
         // Should not fail at CLI level, but may fail at processing level
         if (result.code !== 0) {
@@ -149,7 +230,7 @@ describe('Include Tags CLI Integration', () => {
 
     describe('No matching content error handling', () => {
       test('CLI handles no matching content gracefully', async () => {
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', 'nonexistenttag']);
+        const result = await runFixtureCli(['--include-tags', 'nonexistenttag']);
         
         // Should exit with error code when no content found
         expect(result.code).not.toBe(0);
@@ -157,7 +238,7 @@ describe('Include Tags CLI Integration', () => {
       }, 15000);
 
       test('CLI shows appropriate error for multiple non-matching tags', async () => {
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', 'tag1', 'tag2', 'tag3']);
+        const result = await runFixtureCli(['--include-tags', 'tag1', 'tag2', 'tag3']);
         
         if (result.code !== 0) {
           expect(result.stderr).toMatch(/No content found|No HTML content to convert/);
@@ -167,7 +248,7 @@ describe('Include Tags CLI Integration', () => {
 
     describe('Graceful degradation in CLI', () => {
       test('CLI handles network errors gracefully', async () => {
-        const result = await runCli(['http://nonexistent-domain-12345.com', '--include-tags', 'article']);
+        const result = await runFixtureCli(['--include-tags', 'article'], '/disconnect');
         
         expect(result.code).not.toBe(0);
         expect(result.stderr).toMatch(/Error:|Failed to fetch|net::|getaddrinfo ENOTFOUND/);
@@ -181,8 +262,8 @@ describe('Include Tags CLI Integration', () => {
       });
 
       test('CLI handles timeout scenarios with include-tags', async () => {
-        // Use a very short wait time with a slow-loading page
-        const result = await runCli(['http://httpbin.org/delay/5', '--include-tags', 'body', '--wait', '0.1']);
+        // Use a short wait time with a delayed response
+        const result = await runFixtureCli(['--include-tags', 'body', '--wait', '0.1'], '/slow');
         
         // Should either succeed or fail gracefully with timeout
         if (result.code !== 0) {
@@ -193,7 +274,7 @@ describe('Include Tags CLI Integration', () => {
 
     describe('Invalid tag name handling in CLI', () => {
       test('CLI accepts but processes invalid HTML tag names', async () => {
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', '<invalid>', 'tag@#$']);
+        const result = await runFixtureCli(['--include-tags', '<invalid>', 'tag@#$']);
         
         // Should not fail at CLI validation level
         if (result.code !== 0) {
@@ -204,7 +285,7 @@ describe('Include Tags CLI Integration', () => {
       }, 10000);
 
       test('CLI handles numeric tag names', async () => {
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', '123', '456']);
+        const result = await runFixtureCli(['--include-tags', '123', '456']);
         
         if (result.code !== 0) {
           expect(result.stderr).toMatch(/No content found|No HTML content to convert/);
@@ -213,7 +294,7 @@ describe('Include Tags CLI Integration', () => {
       }, 10000);
 
       test('CLI handles CSS selector-like strings as tag names', async () => {
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', '.class', '#id', 'div.class']);
+        const result = await runFixtureCli(['--include-tags', '.class', '#id', 'div.class']);
         
         if (result.code !== 0) {
           expect(result.stderr).toMatch(/No content found|No HTML content to convert/);
@@ -224,7 +305,7 @@ describe('Include Tags CLI Integration', () => {
 
     describe('Error recovery and resilience in CLI', () => {
       test('CLI continues processing with mixed valid and invalid tags', async () => {
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', 'body', 'invalid@tag', 'nonexistent']);
+        const result = await runFixtureCli(['--include-tags', 'body', 'invalid@tag', 'nonexistent']);
         
         // Should succeed because 'body' is a valid tag that exists
         expect(result.code).toBe(0);
@@ -233,7 +314,7 @@ describe('Include Tags CLI Integration', () => {
 
       test('CLI handles large number of tag arguments', async () => {
         const manyTags = Array.from({length: 50}, (_, i) => `tag${i}`);
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', ...manyTags]);
+        const result = await runFixtureCli(['--include-tags', ...manyTags]);
         
         // Should not fail due to too many arguments
         if (result.code !== 0) {
@@ -243,8 +324,7 @@ describe('Include Tags CLI Integration', () => {
       }, 15000);
 
       test('CLI handles combination of include-tags with other error conditions', async () => {
-        const result = await runCli([
-          'http://httpbin.org/html',
+        const result = await runFixtureCli([
           '--include-tags', 'nonexistent',
           '--remove-tags', 'script',
           '--wait', '0.1',
@@ -258,7 +338,7 @@ describe('Include Tags CLI Integration', () => {
       }, 15000);
 
       test('CLI error messages are user-friendly', async () => {
-        const result = await runCli(['http://httpbin.org/html', '--include-tags', 'nonexistent']);
+        const result = await runFixtureCli(['--include-tags', 'nonexistent']);
         
         if (result.code !== 0) {
           // Error message should be clear and not show internal stack traces
@@ -291,18 +371,17 @@ describe('Include Tags CLI Integration', () => {
 
   describe('End-to-end CLI functionality', () => {
     test('include-tags processes content successfully with valid URL', async () => {
-      // Use httpbin.org/html which provides a simple HTML page for testing
-      const result = await runCli(['http://httpbin.org/html', '--include-tags', 'body']);
+      const result = await runFixtureCli(['--include-tags', 'body']);
       
       // Should complete successfully (exit code 0) and produce markdown output
       expect(result.code).toBe(0);
       expect(result.stdout.length).toBeGreaterThan(0);
       expect(result.stderr).not.toMatch(/Error:/);
-    }, 15000); // Longer timeout for network request
+    }, 15000);
 
     test('include-tags with no matching content handles gracefully', async () => {
       // Use a URL that won't have the specified tags
-      const result = await runCli(['http://httpbin.org/html', '--include-tags', 'nonexistenttag']);
+      const result = await runFixtureCli(['--include-tags', 'nonexistenttag']);
       
       // Based on the current implementation, this may exit with error code 1
       // when no content is found, which is acceptable behavior
@@ -316,8 +395,7 @@ describe('Include Tags CLI Integration', () => {
     }, 15000);
 
     test('include-tags combined with remove-tags works correctly', async () => {
-      const result = await runCli([
-        'http://httpbin.org/html', 
+      const result = await runFixtureCli([
         '--include-tags', 'body',
         '--remove-tags', 'script', 'style'
       ]);
@@ -333,8 +411,7 @@ describe('Include Tags CLI Integration', () => {
       const tempFile = path.join(__dirname, 'temp-include-tags-test.md');
       
       try {
-        const result = await runCli([
-          'http://httpbin.org/html',
+        const result = await runFixtureCli([
           '--include-tags', 'body',
           '--output', tempFile
         ]);

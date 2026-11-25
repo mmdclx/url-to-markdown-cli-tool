@@ -158,9 +158,11 @@ url-to-md https://news-site.com \
   --clean-content \
   -o mobile-article.md
 
-# Disable web security for difficult sites (use with caution)
-url-to-md https://cors-protected-site.com --disable-web-security
+# Convert a page from a trusted local development server
+url-to-md http://localhost:3000 --allow-private-network
 ```
+
+The browser accepts HTTP(S) URLs and blocks non-public destinations by default, including for redirects and subresources. `--allow-private-network` permits private or loopback addresses only for the requested origin. Link-local and reserved addresses remain blocked. Use a worker with OS-level network isolation if you expose this CLI to untrusted users.
 
 ### Batch Processing & Automation
 ```bash
@@ -198,7 +200,7 @@ Options:
   --desktop                        Use desktop viewport (1920x1080 - standard desktop)
   --viewport-width <width>         Set viewport width in pixels (320-1920, default: 375)
   --viewport-height <height>       Set viewport height in pixels (568-1080, default: 667)
-  --disable-web-security           Disable web security (CORS) - use with caution for difficult sites
+  --allow-private-network          Allow private or loopback addresses for the requested origin
   -h, --help                       display help for command
 ```
 

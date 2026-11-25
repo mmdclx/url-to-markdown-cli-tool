@@ -7,6 +7,7 @@
 
 const { Command } = require('commander');
 const fs = require('fs').promises;
+const { parseWebUrl } = require('./lib/browserProxy');
 const { getPageSource } = require('./lib/pageFetcher');
 const { getProcessedMarkdown } = require('./lib/markdownProcessor');
 
@@ -21,7 +22,7 @@ async function run(options) {
             wait: options.wait,
             headless: !options.showBrowser,
             showBrowser: options.showBrowser,
-            disableWebSecurity: options.disableWebSecurity,
+            allowPrivateNetwork: options.allowPrivateNetwork,
             viewportWidth: options.viewportWidth,
             viewportHeight: options.viewportHeight
         });
@@ -89,7 +90,7 @@ function main() {
         .option('--desktop', 'Use desktop viewport (1920x1080 - standard desktop)')
         .option('--viewport-width <width>', 'Set viewport width in pixels (320-1920)', (value) => parseInt(value, 10), 375)
         .option('--viewport-height <height>', 'Set viewport height in pixels (568-1080)', (value) => parseInt(value, 10), 667)
-        .option('--disable-web-security', 'Disable web security (CORS) - use with caution for difficult sites', false)
+        .option('--allow-private-network', 'Allow private or loopback addresses for the requested origin')
         .addHelpText('after', `
 Examples:
   Basic usage:
@@ -109,9 +110,9 @@ Examples:
         .action(async (url, options) => {
             // Validate URL
             try {
-                new URL(url);
+                parseWebUrl(url);
             } catch (error) {
-                console.error(`Error: Invalid URL provided: ${url}`);
+                console.error(`Error: ${error.message}`);
                 process.exit(1);
             }
 

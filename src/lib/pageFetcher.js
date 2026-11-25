@@ -6,6 +6,7 @@
  */
 
 const puppeteer = require('puppeteer');
+const { parseWebUrl, startBrowserProxy } = require('./browserProxy');
 
 /**
  * Get HTML source using Puppeteer.
@@ -16,7 +17,7 @@ const puppeteer = require('puppeteer');
  * @param {boolean} [options.headless=true] - Use headless browser or not
  * @param {string} [options.userAgent] - User agent string for the browser
  * @param {boolean} [options.showBrowser=false] - Show browser window (opposite of headless)
- * @param {boolean} [options.disableWebSecurity=false] - Disable web security (CORS) - use with caution
+ * @param {boolean} [options.allowPrivateNetwork=false] - Allow private or loopback addresses for the requested origin
  * @param {number} [options.viewportWidth=375] - Viewport width in pixels (320-1920)
  * @param {number} [options.viewportHeight=667] - Viewport height in pixels (568-1080)
  * @returns {Promise<string>} HTML source code of the page
@@ -27,7 +28,7 @@ async function getPageSource(url, options = {}) {
         wait = 1.5,
         headless = true,
         showBrowser = false,
-        disableWebSecurity = false,
+        allowPrivateNetwork = false,
         userAgent,
         viewportWidth = 375,
         viewportHeight = 667
@@ -44,22 +45,26 @@ async function getPageSource(url, options = {}) {
     // showBrowser overrides headless setting
     const isHeadless = showBrowser ? false : headless;
 
-    let browser = null;
+    const targetUrl = parseWebUrl(url);
+    const proxy = await startBrowserProxy(targetUrl, allowPrivateNetwork);
+    let browser;
     try {
-        // Launch browser with secure Chrome options
-        const args = [
-            '--disable-dev-shm-usage', // Required for Docker/CI environments
-            '--disable-features=VizDisplayCompositor'
-        ];
-        
-        // Only disable web security if explicitly requested (use with caution)
-        if (disableWebSecurity) {
-            args.push('--disable-web-security');
-        }
-        
         browser = await puppeteer.launch({
             headless: isHeadless,
-            args
+            pipe: true,
+            downloadBehavior: { policy: 'deny' },
+            allowlist: [
+                'http://*:*/*', 'https://*:*/*', 'ws://*:*/*', 'wss://*:*/*',
+                'about\\:blank', 'about\\:srcdoc', 'blob:*', 'data:*'
+            ],
+            args: [
+                '--disable-dev-shm-usage',
+                `--proxy-server=${proxy.endpoint}`,
+                '--proxy-bypass-list=<-loopback>',
+                '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1',
+                '--disable-quic',
+                '--force-webrtc-ip-handling-policy=disable_non_proxied_udp'
+            ]
         });
 
         const page = await browser.newPage();
@@ -73,7 +78,7 @@ async function getPageSource(url, options = {}) {
         }
         
         // Navigate to the URL and wait for DOM content to load
-        await page.goto(url, { 
+        await page.goto(targetUrl.href, {
             waitUntil: 'domcontentloaded',
             timeout: 30000 // 30 second timeout
         });
@@ -98,10 +103,12 @@ async function getPageSource(url, options = {}) {
         return await page.content();
 
     } catch (error) {
-        throw new Error(`Error while fetching page: ${error.message}. Ensure Chrome/Chromium is installed.`);
+        throw new Error(`Error while fetching page: ${error.message}`, { cause: error });
     } finally {
-        if (browser) {
-            await browser.close();
+        try {
+            await browser?.close();
+        } finally {
+            await proxy.close();
         }
     }
 }
