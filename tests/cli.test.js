@@ -175,6 +175,24 @@ describe('Waiting for dynamic content', () => {
   }, 10000);
 });
 
+describe('Content selection', () => {
+  test('combines a selector wait with repeatable CSS filtering', async () => {
+    const result = await runFixtureCli([
+      '--wait-for', '#loaded', '--select', '#loaded', '--select', 'main', '--remove-selector', 'script'
+    ], '/dynamic-content');
+
+    expect(result).toEqual({ code: 0, stdout: '# Dynamic content\n', stderr: '' });
+  }, 10000);
+
+  test('extracts an article through the CLI', async () => {
+    const result = await runFixtureCli(['--article']);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('# Understanding Web Scraping');
+    expect(result.stdout).not.toMatch(/Site Header|Related Articles|Example Website/);
+  }, 10000);
+});
+
 describe('HTTP errors', () => {
   test.each([
     ['/missing', 404, '/missing'],

@@ -19,6 +19,13 @@ function parseWaitTimeout(value) {
     return seconds;
 }
 
+function collectSelector(value, selectors) {
+    if (!value.trim()) {
+        throw new InvalidArgumentError('Expected a CSS selector');
+    }
+    return [...selectors, value];
+}
+
 /**
  * Main execution function
  * @param {Object} options - CLI options object
@@ -57,7 +64,10 @@ async function run(options) {
             removeGifImage: options.gifImages === false,
             removeSvgImage: options.svgImages === false,
             removeTags: tagsToRemove,
-            includeTags: options.includeTags
+            includeTags: options.includeTags,
+            article: options.article,
+            select: options.select,
+            removeSelectors: options.removeSelector
         });
 
         // Output result
@@ -91,6 +101,9 @@ function main() {
         .option('--no-gif-images', 'Remove GIF images from the output')
         .option('--no-svg-images', 'Remove SVG images from the output')
         .option('--clean-content', 'Remove common non-content tags (nav, footer, aside, script, style, header, noscript, canvas)')
+        .option('--article', 'Extract the main article or page content')
+        .option('--select <selector>', 'Keep matches for a CSS selector (repeatable)', collectSelector, [])
+        .option('--remove-selector <selector>', 'Remove matches for a CSS selector (repeatable)', collectSelector, [])
         .option('--include-tags <tags...>', 'Include only specific HTML tags and their content (e.g., --include-tags article main section)')
         .option('--remove-tags <tags...>', 'Remove specific HTML tags from the output (e.g., --remove-tags div span button)')
         .option('--wait <seconds>', 'Seconds to wait for the page to load', parseFloat, 1.5)
@@ -145,6 +158,11 @@ Examples:
             // Validate include-tags option
             if (options.includeTags !== undefined && (!Array.isArray(options.includeTags) || options.includeTags.length === 0)) {
                 console.error('Error: --include-tags requires at least one tag name');
+                process.exit(1);
+            }
+
+            if ([options.article, options.select.length, options.includeTags].filter(Boolean).length > 1) {
+                console.error('Error: Choose one of --article, --select, or --include-tags');
                 process.exit(1);
             }
 

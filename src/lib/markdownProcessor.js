@@ -25,6 +25,45 @@ function backtickFence(code, minimum) {
     return '`'.repeat(length);
 }
 
+function extractSelection($, nodes) {
+    const selected = new Set(nodes);
+    const document = cheerio.load('<body></body>');
+    const body = document('body');
+    for (const node of selected) {
+        const element = $(node);
+        if (!element.parents().toArray().some(parent => selected.has(parent))) {
+            const content = node.name === 'body' ? element.contents() : element;
+            body.append(content.clone());
+        }
+    }
+    return document;
+}
+
+function findCss($, selectors) {
+    try {
+        // find() parses selectors, while $() can also interpret a string as HTML.
+        return $.root().find(selectors.join(', '));
+    } catch (error) {
+        throw new Error(`Invalid CSS selector in ${JSON.stringify(selectors)}: ${error.message}`);
+    }
+}
+
+function extractArticle($) {
+    for (const selector of ['article, [role="article"]', 'main, [role="main"]']) {
+        let best;
+        let longest = 0;
+        $(selector).each((index, node) => {
+            const length = $(node).text().trim().length;
+            if (length > longest) {
+                best = node;
+                longest = length;
+            }
+        });
+        if (best) return extractSelection($, [best]);
+    }
+    return $;
+}
+
 /**
  * Filter HTML content to include only specified tags and their content.
  * This function extracts content from specified HTML tags, preserving hierarchy and nesting.
@@ -40,28 +79,15 @@ function filterToIncludeTags($, includeTags) {
     }
     
     try {
-        // Create new document with only included content
-        const filteredContent = [];
-        
-        includeTags.forEach(tag => {
-            $(tag).each((index, element) => {
-                filteredContent.push($(element).clone());
-            });
-        });
-        
-        if (filteredContent.length === 0) {
+        const selected = new Set(includeTags.flatMap(tag => $(tag).toArray()));
+        const matches = $('*').toArray().filter(node => selected.has(node));
+        if (matches.length === 0) {
             // No matching tags found, log warning and return empty document
             console.warn(`Warning: No content found matching the specified include-tags: [${includeTags.join(', ')}]`);
             return cheerio.load('<body></body>');
         }
         
-        // Create new document with filtered content
-        const newDoc = cheerio.load('<body></body>');
-        filteredContent.forEach(content => {
-            newDoc('body').append(content);
-        });
-        
-        return newDoc;
+        return extractSelection($, matches);
         
     } catch (error) {
         // If include-tags processing fails, log warning and fall back to original document
@@ -85,6 +111,9 @@ function filterToIncludeTags($, includeTags) {
  * @param {boolean} [options.removeStyleTag=true] - Remove style tags
  * @param {Array<string>} [options.removeTags=[]] - Additional HTML tags to remove
  * @param {Array<string>} [options.includeTags] - HTML tags to include (filters content to only these tags)
+ * @param {boolean} [options.article=false] - Extract the main article or page content
+ * @param {Array<string>} [options.select] - CSS selectors to include
+ * @param {Array<string>} [options.removeSelectors] - CSS selectors to remove before extraction
  * @param {boolean} [options.preserveTableStructure=false] - Enable enhanced table formatting
  * @returns {Promise<string>} Clean markdown text ready for LLM processing
  * @throws {Error} If there's an error while processing the HTML
@@ -100,6 +129,9 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
         removeStyleTag = true,
         removeTags = [],
         includeTags = [],
+        article = false,
+        select = [],
+        removeSelectors = [],
         preserveTableStructure = true
     } = options;
 
@@ -107,8 +139,18 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
         // Load HTML with Cheerio
         let $ = cheerio.load(pageSource);
         
-        // Apply include-tags filtering first (if specified)
-        if (includeTags && includeTags.length > 0) {
+        if (removeSelectors.length) {
+            findCss($, removeSelectors).remove();
+        }
+        if (select.length) {
+            const matches = findCss($, select).toArray();
+            if (!matches.length) {
+                throw new Error(`No content found matching CSS selectors ${JSON.stringify(select)}`);
+            }
+            $ = extractSelection($, matches);
+        } else if (article) {
+            $ = extractArticle($);
+        } else if (includeTags && includeTags.length > 0) {
             $ = filterToIncludeTags($, includeTags);
         }
         
@@ -119,6 +161,9 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
         }
         if (removeStyleTag) {
             tagsToRemove.push('style');
+        }
+        if (article) {
+            tagsToRemove.push('nav', 'aside', 'footer', 'noscript', 'canvas');
         }
         tagsToRemove.push(...removeTags);
         
