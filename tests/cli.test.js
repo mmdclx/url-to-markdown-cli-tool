@@ -32,6 +32,11 @@ const fixtureServer = createServer((request, response) => {
   } else if (request.url === '/missing-image') {
     response.setHeader('Content-Type', 'text/html');
     response.end('<h1>Page available</h1><img src="/missing" alt="Missing image">');
+  } else if (request.url === '/dynamic-content') {
+    response.setHeader('Content-Type', 'text/html');
+    response.end(`<main></main><script>setTimeout(() => {
+      document.querySelector('main').innerHTML = '<h1 id="loaded">Dynamic content</h1>';
+    }, 250)</script>`);
   } else if (request.url === '/subresources') {
     response.setHeader('Content-Type', 'text/html');
     response.end(`<h1>Fixture</h1><img src="${restrictedOrigin}"><script src="/fixture.js"></script>`);
@@ -150,6 +155,23 @@ describe('Link resolution', () => {
     expect(result.code).toBe(0);
     expect(result.stdout).toContain(`[Next](${fixtureOrigin}${basePath}Next.API#Install)`);
     expect(result.stdout).toContain(`![Diagram](${fixtureOrigin}${basePath}Diagram.png)`);
+  }, 10000);
+});
+
+describe('Waiting for dynamic content', () => {
+  test('captures an element inserted after initial page load', async () => {
+    const result = await runFixtureCli(['--wait-for', 'main > #loaded'], '/dynamic-content');
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain('# Dynamic content');
+  }, 10000);
+
+  test('reports the selector when the wait expires', async () => {
+    const result = await runFixtureCli(['--wait-for', '.missing', '--wait-for-timeout', '0.2']);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('waiting for CSS selector ".missing"');
+    expect(result.stdout).toBe('');
   }, 10000);
 });
 

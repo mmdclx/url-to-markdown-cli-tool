@@ -20,7 +20,9 @@ function throwForHttpError(response) {
  * 
  * @param {string} url - The URL from which HTML content is to be extracted
  * @param {Object} options - Configuration options
- * @param {number} [options.wait=1.5] - Time to wait for the website to load (seconds)
+ * @param {number} [options.wait] - Extra delay before checking page readiness (seconds)
+ * @param {string} [options.waitFor] - CSS selector that must match before capture
+ * @param {number} [options.waitForTimeout=30] - Maximum time to wait for a selector (seconds)
  * @param {boolean} [options.headless=true] - Use headless browser or not
  * @param {string} [options.userAgent] - User agent string for the browser
  * @param {boolean} [options.showBrowser=false] - Show browser window (opposite of headless)
@@ -32,7 +34,9 @@ function throwForHttpError(response) {
  */
 async function fetchPage(url, options = {}) {
     const {
-        wait = 1.5,
+        waitFor,
+        wait = waitFor ? 0 : 1.5,
+        waitForTimeout = 30,
         headless = true,
         showBrowser = false,
         allowPrivateNetwork = false,
@@ -106,15 +110,29 @@ async function fetchPage(url, options = {}) {
             await new Promise(resolve => setTimeout(resolve, wait * 1000));
         }
         
-        // Wait for page to be fully loaded (handles dynamic content)
-        try {
-            await page.waitForFunction(
-                () => document.readyState === 'complete',
-                { timeout: Math.max(wait * 1000, 5000) } // Minimum 5 seconds for readyState check
-            );
-        } catch (timeoutError) {
-            // Continue anyway if timeout - some content is better than none
-            console.warn('Page load timeout, continuing with partial content');
+        if (waitFor) {
+            try {
+                await page.waitForFunction(
+                    selector => document.querySelector(selector) !== null,
+                    { timeout: waitForTimeout * 1000 },
+                    waitFor
+                );
+            } catch (error) {
+                throwForHttpError(documentResponse);
+                if (error instanceof puppeteer.TimeoutError) {
+                    throw new Error(`Timed out after ${waitForTimeout}s waiting for CSS selector ${JSON.stringify(waitFor)}`);
+                }
+                throw error;
+            }
+        } else {
+            try {
+                await page.waitForFunction(
+                    () => document.readyState === 'complete',
+                    { timeout: Math.max(wait * 1000, 5000) }
+                );
+            } catch (timeoutError) {
+                console.warn('Page load timeout, continuing with partial content');
+            }
         }
         
         // A client-side redirect can replace the main document while the page loads.

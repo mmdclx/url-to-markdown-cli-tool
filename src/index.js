@@ -5,11 +5,19 @@
  * JavaScript/Node.js equivalent of the Python cli.py module.
  */
 
-const { Command } = require('commander');
+const { Command, InvalidArgumentError } = require('commander');
 const fs = require('fs').promises;
 const { parseWebUrl } = require('./lib/browserProxy');
 const { fetchPage } = require('./lib/pageFetcher');
 const { getProcessedMarkdown } = require('./lib/markdownProcessor');
+
+function parseWaitTimeout(value) {
+    const seconds = Number(value);
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+        throw new InvalidArgumentError('Expected a positive number of seconds');
+    }
+    return seconds;
+}
 
 /**
  * Main execution function
@@ -20,6 +28,8 @@ async function run(options) {
         // Fetch page source
         const { html, baseUrl } = await fetchPage(options.url, {
             wait: options.wait,
+            waitFor: options.waitFor,
+            waitForTimeout: options.waitForTimeout,
             headless: !options.showBrowser,
             showBrowser: options.showBrowser,
             allowPrivateNetwork: options.allowPrivateNetwork,
@@ -84,6 +94,8 @@ function main() {
         .option('--include-tags <tags...>', 'Include only specific HTML tags and their content (e.g., --include-tags article main section)')
         .option('--remove-tags <tags...>', 'Remove specific HTML tags from the output (e.g., --remove-tags div span button)')
         .option('--wait <seconds>', 'Seconds to wait for the page to load', parseFloat, 1.5)
+        .option('--wait-for <selector>', 'Wait for a CSS selector to match an element')
+        .option('--wait-for-timeout <seconds>', 'Timeout for --wait-for', parseWaitTimeout, 30)
         .option('--show-browser', 'Show the browser window (visible mode)', false)
         .option('--mobile', 'Use mobile viewport (375x667 - iPhone)')
         .option('--tablet', 'Use tablet viewport (768x1024 - iPad portrait)')
@@ -117,9 +129,17 @@ Examples:
             }
 
             // Validate wait time
-            if (options.wait < 0) {
+            if (!Number.isFinite(options.wait) || options.wait < 0) {
                 console.error('Error: Wait time must be non-negative');
                 process.exit(1);
+            }
+
+            if (options.waitFor !== undefined && !options.waitFor.trim()) {
+                console.error('Error: --wait-for requires a CSS selector');
+                process.exit(1);
+            }
+            if (options.waitFor && program.getOptionValueSource('wait') === 'default') {
+                options.wait = 0;
             }
 
             // Validate include-tags option
