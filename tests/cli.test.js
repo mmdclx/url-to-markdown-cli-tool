@@ -2,7 +2,9 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { once } = require('node:events');
 const { readFileSync } = require('node:fs');
+const { mkdtemp, rm, writeFile } = require('node:fs/promises');
 const { createServer } = require('node:http');
+const { tmpdir } = require('node:os');
 
 const fixtureHtml = readFileSync(path.join(__dirname, 'fixtures/include-tags/article-content.html'));
 const restrictedRequest = jest.fn((_request, response) => response.end('Other fixture'));
@@ -67,11 +69,12 @@ afterAll(async () => {
   await Promise.all([fixtureServer, restrictedServer].map((server) => new Promise((resolve) => server.close(resolve))));
 });
 
-function runCli(args = []) {
+function runCli(args = [], input) {
   return new Promise((resolve) => {
     const nodePath = process.execPath;
     const cliPath = path.join(__dirname, '..', 'src', 'index.js');
     const child = spawn(nodePath, [cliPath, ...args]);
+    child.stdin.end(input);
 
     let stdout = '';
     let stderr = '';
@@ -191,6 +194,47 @@ describe('Content selection', () => {
     expect(result.stdout).toContain('# Understanding Web Scraping');
     expect(result.stdout).not.toMatch(/Site Header|Related Articles|Example Website/);
   }, 10000);
+});
+
+describe('Batch conversion', () => {
+  test('reads stdin and returns a result for each URL, including failures', async () => {
+    const okUrl = `${fixtureOrigin}/docs/chapter/`;
+    const missingUrl = `${fixtureOrigin}/missing`;
+    const result = await runCli([
+      '--input', '-', '--concurrency', '2', '--allow-private-network', '--wait', '0', '--select', 'main'
+    ], `# fixture\r\n${okUrl}\r\n\r\n${missingUrl}\r\ninvalid-url`);
+
+    const records = result.stdout.trim().split('\n').map(JSON.parse).sort((a, b) => a.line - b.line);
+    expect(result.code).toBe(1);
+    expect(records).toEqual([
+      { line: 2, url: okUrl, ok: true, markdown: expect.stringContaining('[Next](') },
+      { line: 4, url: missingUrl, ok: false, error: expect.stringContaining('HTTP 404') },
+      { line: 5, url: 'invalid-url', ok: false, error: 'Invalid URL provided' }
+    ]);
+  }, 15000);
+
+  test('reads a URL file and emits Markdown in a successful JSON Lines record', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'url-to-md-batch-'));
+    const inputPath = path.join(directory, 'urls.txt');
+    const url = `${fixtureOrigin}/html`;
+    try {
+      await writeFile(inputPath, `${url}\n`);
+      const result = await runCli(['--input', inputPath, '--allow-private-network', '--wait', '0', '--article']);
+
+      expect(result.code).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual({
+        line: 1, url, ok: true, markdown: expect.stringContaining('# Understanding Web Scraping')
+      });
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  }, 10000);
+
+  test('rejects concurrency above the maximum', async () => {
+    const result = await runCli(['--input', '-', '--concurrency', '9']);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('Expected an integer from 1 to 8');
+  });
 });
 
 describe('HTTP errors', () => {
@@ -449,7 +493,7 @@ describe('Include Tags CLI Integration', () => {
       // Check that include-tags is documented in help
       expect(output).toMatch(/--include-tags/);
       expect(output).toMatch(/Include only specific HTML tags/);
-      expect(output).toMatch(/article main section/); // Example from help text
+      expect(output).toMatch(/article\s+main\s+section/); // The help formatter may wrap the example.
     });
 
     test('help text shows include-tags with proper formatting', async () => {

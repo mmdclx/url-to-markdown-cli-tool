@@ -7,7 +7,7 @@
 
 const { Command, InvalidArgumentError } = require('commander');
 const fs = require('fs').promises;
-const { parseWebUrl } = require('./lib/browserProxy');
+const { runBatch, DEFAULT_CONCURRENCY, MAX_CONCURRENCY } = require('./lib/batch');
 const { fetchPage } = require('./lib/pageFetcher');
 const { getProcessedMarkdown } = require('./lib/markdownProcessor');
 
@@ -26,61 +26,72 @@ function collectSelector(value, selectors) {
     return [...selectors, value];
 }
 
-/**
- * Main execution function
- * @param {Object} options - CLI options object
- */
+function parseConcurrency(value) {
+    const count = Number(value);
+    if (!Number.isInteger(count) || count < 1 || count > MAX_CONCURRENCY) {
+        throw new InvalidArgumentError(`Expected an integer from 1 to ${MAX_CONCURRENCY}`);
+    }
+    return count;
+}
+
+async function convertUrl(url, options) {
+    const { html, baseUrl } = await fetchPage(url, {
+        wait: options.wait,
+        waitFor: options.waitFor,
+        waitForTimeout: options.waitForTimeout,
+        headless: !options.showBrowser,
+        showBrowser: options.showBrowser,
+        allowPrivateNetwork: options.allowPrivateNetwork,
+        viewportWidth: options.viewportWidth,
+        viewportHeight: options.viewportHeight
+    });
+
+    if (!html) {
+        throw new Error('Fetched page has no HTML content');
+    }
+
+    // Build list of tags to remove
+    let tagsToRemove = options.removeTags || [];
+
+    // Add clean-content tags if option is enabled
+    if (options.cleanContent) {
+        const cleanContentTags = ['nav', 'footer', 'aside', 'script', 'style', 'header', 'noscript', 'canvas'];
+        tagsToRemove = [...tagsToRemove, ...cleanContentTags];
+    }
+
+    // Process HTML to markdown
+    return getProcessedMarkdown(html, baseUrl, {
+        keepImages: options.images !== false,
+        keepWebpageLinks: options.links !== false,
+        removeGifImage: options.gifImages === false,
+        removeSvgImage: options.svgImages === false,
+        removeTags: tagsToRemove,
+        includeTags: options.includeTags,
+        article: options.article,
+        select: options.select,
+        removeSelectors: options.removeSelector
+    });
+}
+
 async function run(options) {
     try {
-        // Fetch page source
-        const { html, baseUrl } = await fetchPage(options.url, {
-            wait: options.wait,
-            waitFor: options.waitFor,
-            waitForTimeout: options.waitForTimeout,
-            headless: !options.showBrowser,
-            showBrowser: options.showBrowser,
-            allowPrivateNetwork: options.allowPrivateNetwork,
-            viewportWidth: options.viewportWidth,
-            viewportHeight: options.viewportHeight
-        });
-
-        if (!html) {
-            throw new Error('Fetched page has no HTML content');
+        if (options.input !== undefined) {
+            const failed = await runBatch(options.input, options.concurrency ?? DEFAULT_CONCURRENCY,
+                url => convertUrl(url, options));
+            if (failed) process.exitCode = 1;
+            return;
         }
 
-        // Build list of tags to remove
-        let tagsToRemove = options.removeTags || [];
-        
-        // Add clean-content tags if option is enabled
-        if (options.cleanContent) {
-            const cleanContentTags = ['nav', 'footer', 'aside', 'script', 'style', 'header', 'noscript', 'canvas'];
-            tagsToRemove = [...tagsToRemove, ...cleanContentTags];
-        }
-
-        // Process HTML to markdown
-        const processed = await getProcessedMarkdown(html, baseUrl, {
-            keepImages: options.images !== false,
-            keepWebpageLinks: options.links !== false,
-            removeGifImage: options.gifImages === false,
-            removeSvgImage: options.svgImages === false,
-            removeTags: tagsToRemove,
-            includeTags: options.includeTags,
-            article: options.article,
-            select: options.select,
-            removeSelectors: options.removeSelector
-        });
-
-        // Output result
+        const markdown = await convertUrl(options.url, options);
         if (options.output) {
-            await fs.writeFile(options.output, processed, 'utf-8');
+            await fs.writeFile(options.output, markdown, 'utf-8');
             console.log(`Output written to: ${options.output}`);
         } else {
-            console.log(processed);
+            console.log(markdown);
         }
-
     } catch (error) {
         console.error(`Error: ${error.message}`);
-        process.exit(1);
+        process.exitCode = 1;
     }
 }
 
@@ -94,8 +105,10 @@ function main() {
         .name('url-to-md')
         .description('Fetch URL content and output LLM-friendly markdown')
         .version('1.1.0')
-        .argument('<url>', 'URL to fetch')
-        .option('-o, --output <file>', 'Write output to file instead of stdout')
+        .argument('[url]', 'URL to fetch')
+        .option('-i, --input <file>', 'Read a URL list from a file or stdin (-) and write JSON Lines')
+        .option('--concurrency <count>', `Concurrent fetches for a URL list (1–${MAX_CONCURRENCY})`, parseConcurrency, DEFAULT_CONCURRENCY)
+        .option('-o, --output <file>', 'Write Markdown for a single URL to a file')
         .option('--no-links', 'Remove webpage links from the output')
         .option('--no-images', 'Remove images from the output')
         .option('--no-gif-images', 'Remove GIF images from the output')
@@ -131,14 +144,21 @@ Examples:
     $ url-to-md https://news.com --include-tags article --remove-tags aside nav
 
   Extract content and save to file:
-    $ url-to-md https://example.com --include-tags main -o content.md`)
+    $ url-to-md https://example.com --include-tags main -o content.md
+
+  Convert a URL list:
+    $ url-to-md --input urls.txt --concurrency 3 > results.jsonl`)
         .action(async (url, options) => {
-            // Validate URL
-            try {
-                parseWebUrl(url);
-            } catch (error) {
-                console.error(`Error: ${error.message}`);
-                process.exit(1);
+            const batch = options.input !== undefined;
+            const hasUrl = url !== undefined;
+            if (hasUrl === batch) {
+                program.error('Error: Provide either one URL or --input <file>');
+            }
+            if (batch && options.output !== undefined) {
+                program.error('Error: Batch results are written to stdout. Redirect stdout to save them.');
+            }
+            if (!batch && program.getOptionValueSource('concurrency') === 'cli') {
+                program.error('Error: --concurrency requires --input');
             }
 
             // Validate wait time
