@@ -6,12 +6,13 @@ No LLM or API keys required.
 
 **Key features:**
 - 🔄 Convert any webpage to properly formatted markdown with headers, links, and structure
-- 🎯 **Targeted content extraction** - Include only specific HTML tags like articles, main content, or sections
+- 🎯 **Targeted content extraction** - Select an article, HTML tags, or elements matching CSS selectors
 - 🧹 **Smart content cleaning** - Remove navigation, footers, scripts and other non-content elements
 - 🚫 Remove images, links, or specific HTML tags as needed
 - 📊 **Enhanced table conversion** - HTML tables become clean markdown tables with pipes and headers
 - 📱 **Viewport control** - Mobile, tablet, desktop viewports for responsive content extraction
-- ⏱️ Configurable wait times for dynamic content and SPAs
+- ⏱️ Wait for a CSS selector to appear on a JavaScript-rendered page
+- 📚 Convert URL lists from a file or stdin with bounded concurrency and per-URL results
 - 👁️ Headless or visible browser modes for debugging
 - 📦 Easy npm installation with global CLI access
 - 🧠 Clean output optimized for LLM parsing and understanding
@@ -44,7 +45,7 @@ npm install url-to-markdown-cli-tool
 
 ```bash
 # Clone and install from this repository
-git clone https://github.com/yourusername/url-to-markdown-cli-tool.git
+git clone https://github.com/mmdclx/url-to-markdown-cli-tool.git
 cd url-to-markdown-cli-tool
 npm install
 npm install -g .
@@ -73,7 +74,38 @@ url-to-md https://example.com
 url-to-md --help
 ```
 
-### Targeted Content Extraction
+### Article Mode and CSS Selectors
+
+Use `--article` to extract the article with the most text. It falls back to the main landmark and then the page body. It removes navigation, sidebars, and footers while keeping the article heading.
+
+Use `--select` to keep elements matching your CSS selectors. Repeat the option or pass a comma-separated selector list. Matches stay in page order, and a matching descendant appears once inside its selected ancestor. Use `--remove-selector` to remove elements before extraction.
+
+```bash
+url-to-md https://example.com/guide --article -o guide.md
+
+url-to-md https://example.com/docs \
+  --select 'main > .guide' \
+  --select '#reference' \
+  --remove-selector '.advertisement' \
+  -o docs.md
+```
+
+Choose one of `--article`, `--select`, or `--include-tags` for each run. The removal options can be combined with any of them.
+
+### Waiting for JavaScript Content
+
+`--wait-for` captures the page when the CSS selector matches an element. The default selector timeout is 30 seconds. Use `--wait-for-timeout` to override it. A timeout exits with status 1. If you also pass `--wait`, that delay runs before the selector check.
+
+```bash
+url-to-md https://example.com/guide \
+  --wait-for 'article.post' --wait-for-timeout 15 --article
+```
+
+![Terminal demo showing an article loaded by JavaScript and converted to Markdown](docs/demo/article.gif)
+
+The demo uses a local fixture and passes `--allow-private-network` to permit that origin.
+
+### Targeted Content Extraction by Tag
 ```bash
 # Extract only article content (perfect for news sites and blogs)
 url-to-md https://news-site.com --include-tags article -o article.md
@@ -166,20 +198,35 @@ The browser accepts HTTP(S) URLs and blocks non-public destinations by default, 
 
 ### Batch Processing & Automation
 
-An HTTP 4xx or 5xx response for the main page exits with status 1 and reports the status and URL on stderr.
+Create a text file with one URL per line. Blank lines and lines starting with `#` are skipped. Use `--input -` to read the same format from stdin.
 
 ```bash
-# Batch processing with error handling
-for url in $(cat urls.txt); do
-  echo "Processing: $url"
-  url-to-md "$url" -o "output/$(basename $url).md" || echo "Failed: $url"
-done
+# From a file
+url-to-md --input urls.txt --concurrency 2 --article > results.jsonl
+
+# From stdin
+printf '%s\n' 'https://example.com/' 'https://www.iana.org/help/example-domains' \
+  | url-to-md --input - --select main > results.jsonl
+
+# Print the Markdown from successful records
+jq -r 'select(.ok) | .markdown' results.jsonl
 ```
+
+Batch mode runs up to 3 conversions at once by default. Set `--concurrency` to an integer from 1 to 8. Each completed conversion writes a JSON Lines record to stdout, so records can arrive out of input order. The `line` field identifies the original input line, including skipped lines in the numbering.
+
+```jsonl
+{"line":1,"url":"https://example.com/","ok":true,"markdown":"# Example Domain"}
+{"line":2,"url":"https://example.com/missing","ok":false,"error":"Error while fetching page: HTTP 404 for https://example.com/missing"}
+```
+
+Batch mode finishes the remaining URLs after individual failures and exits with status 1 if any URL fails. Redirect stdout to save the JSON Lines file. For a single URL, `-o` writes Markdown, and an HTTP 4xx or 5xx response for the main page reports the status and URL on stderr and exits with status 1.
+
+![Terminal demo showing a URL list processed with two workers, including an HTTP failure and successful Markdown results](docs/demo/batch.gif)
 
 ## Full Command Line Options
 
 ```
-Usage: url-to-md [options] <url>
+Usage: url-to-md [options] [url]
 
 Fetch URL content and output LLM-friendly markdown
 
@@ -188,15 +235,22 @@ Arguments:
 
 Options:
   -V, --version                    output the version number
-  -o, --output <file>              Write output to file instead of stdout
+  -i, --input <file>               Read URLs from a file or stdin (-) and write JSON Lines
+  --concurrency <count>            Batch concurrency from 1 to 8 (default: 3)
+  -o, --output <file>              Write Markdown for a single URL to a file
   --no-links                       Remove webpage links from the output
   --no-images                      Remove images from the output
   --no-gif-images                  Remove GIF images from the output  
   --no-svg-images                  Remove SVG images from the output
   --clean-content                  Remove common non-content tags (nav, footer, aside, script, style, header, noscript, canvas)
+  --article                        Extract the main article or page content
+  --select <selector>              Keep matches for a CSS selector (repeatable)
+  --remove-selector <selector>     Remove matches for a CSS selector (repeatable)
   --include-tags <tags...>         Include only specific HTML tags and their content (e.g., --include-tags article main section)
   --remove-tags <tags...>          Remove specific HTML tags (e.g., --remove-tags div span)
-  --wait <seconds>                 Seconds to wait for page to load (default: 1.5)
+  --wait <seconds>                 Extra delay (default: 1.5, or 0 with --wait-for)
+  --wait-for <selector>            Wait for a CSS selector to match an element
+  --wait-for-timeout <seconds>      Selector timeout (default: 30)
   --show-browser                   Show browser window (visible mode)
   --mobile                         Use mobile viewport (375x667 - iPhone)
   --tablet                         Use tablet viewport (768x1024 - iPad portrait)
@@ -215,10 +269,9 @@ Many modern websites use **JavaScript to load content dynamically** after the in
 
 **Solutions:**
 
-1. **Increase wait time** for slow-loading content:
+1. **Wait for the content selector** if you know which element will appear:
    ```bash
-   # Wait 5 seconds for JavaScript content to load
-   url-to-md https://spa-app.com --wait 5.0
+   url-to-md https://spa-app.com --wait-for '#results' --wait-for-timeout 15
    ```
 
 2. **Debug with visible browser** to see what's happening:
