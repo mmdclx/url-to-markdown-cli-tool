@@ -23,3 +23,15 @@ test.each([
     await expect(startBrowserProxy(parseWebUrl(url), allowPrivate))
         .rejects.toThrow('Blocked browser destination');
 });
+
+test('does not start listening if the capture is canceled during DNS lookup', async () => {
+    let resolveLookup;
+    lookup.mockImplementationOnce(() => new Promise(resolve => { resolveLookup = resolve; }));
+    const controller = new AbortController();
+    const proxy = startBrowserProxy(parseWebUrl('https://docs.example.test'), false, controller.signal);
+
+    controller.abort(new Error('Capture canceled'));
+    resolveLookup([{ address: '93.184.216.34', family: 4 }]);
+
+    await expect(proxy).rejects.toThrow('Capture canceled');
+});

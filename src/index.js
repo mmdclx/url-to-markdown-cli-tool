@@ -8,13 +8,21 @@
 const { Command, InvalidArgumentError } = require('commander');
 const fs = require('fs').promises;
 const { runBatch, DEFAULT_CONCURRENCY, MAX_CONCURRENCY } = require('./lib/batch');
-const { fetchPage } = require('./lib/pageFetcher');
+const { fetchPage, MAX_CAPTURE_SECONDS } = require('./lib/pageFetcher');
 const { getProcessedMarkdown } = require('./lib/markdownProcessor');
 
 function parseWaitTimeout(value) {
     const seconds = Number(value);
     if (!Number.isFinite(seconds) || seconds <= 0) {
         throw new InvalidArgumentError('Expected a positive number of seconds');
+    }
+    return seconds;
+}
+
+function parseCaptureTimeout(value) {
+    const seconds = parseWaitTimeout(value);
+    if (seconds > MAX_CAPTURE_SECONDS) {
+        throw new InvalidArgumentError(`Expected at most ${MAX_CAPTURE_SECONDS} seconds`);
     }
     return seconds;
 }
@@ -39,6 +47,7 @@ async function convertUrl(url, options) {
         wait: options.wait,
         waitFor: options.waitFor,
         waitForTimeout: options.waitForTimeout,
+        captureTimeout: options.captureTimeout,
         headless: !options.showBrowser,
         showBrowser: options.showBrowser,
         allowPrivateNetwork: options.allowPrivateNetwork,
@@ -122,6 +131,7 @@ function main() {
         .option('--wait <seconds>', 'Seconds to wait for the page to load', parseFloat, 1.5)
         .option('--wait-for <selector>', 'Wait for a CSS selector to match an element')
         .option('--wait-for-timeout <seconds>', 'Timeout for --wait-for', parseWaitTimeout, 30)
+        .option('--capture-timeout <seconds>', 'Total page capture timeout', parseCaptureTimeout, MAX_CAPTURE_SECONDS)
         .option('--show-browser', 'Show the browser window (visible mode)', false)
         .option('--mobile', 'Use mobile viewport (375x667 - iPhone)')
         .option('--tablet', 'Use tablet viewport (768x1024 - iPad portrait)')

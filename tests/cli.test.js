@@ -178,6 +178,21 @@ describe('Waiting for dynamic content', () => {
   }, 10000);
 });
 
+test('releases a batch worker when the total capture deadline expires', async () => {
+  const slowUrl = `${fixtureOrigin}/html`;
+  const readyUrl = `${fixtureOrigin}/dynamic-content`;
+  const result = await runCli([
+    '--input', '-', '--concurrency', '1', '--allow-private-network',
+    '--wait-for', '#loaded', '--capture-timeout', '3'
+  ], `${slowUrl}\n${readyUrl}\n`);
+
+  expect(result.code).toBe(1);
+  expect(result.stdout.trim().split('\n').map(JSON.parse)).toEqual([
+    { line: 1, url: slowUrl, ok: false, error: expect.stringContaining('Capture timed out after 3s') },
+    { line: 2, url: readyUrl, ok: true, markdown: '# Dynamic content' }
+  ]);
+}, 12000);
+
 describe('Content selection', () => {
   test('combines a selector wait with repeatable CSS filtering', async () => {
     const result = await runFixtureCli([

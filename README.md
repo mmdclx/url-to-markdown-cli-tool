@@ -96,6 +96,8 @@ Choose one of `--article`, `--select`, or `--include-tags` for each run. The rem
 
 `--wait-for` captures the page when the CSS selector matches an element. The default selector timeout is 30 seconds. Use `--wait-for-timeout` to override it. A timeout exits with status 1. If you also pass `--wait`, that delay runs before the selector check.
 
+Each URL has a 60-second capture deadline covering DNS, browser startup, navigation, waits, and HTML capture. Use `--capture-timeout` to set a shorter deadline in seconds. A deadline failure in batch mode appears in that URL's result.
+
 ```bash
 url-to-md https://example.com/guide \
   --wait-for 'article.post' --wait-for-timeout 15 --article
@@ -251,6 +253,7 @@ Options:
   --wait <seconds>                 Extra delay (default: 1.5, or 0 with --wait-for)
   --wait-for <selector>            Wait for a CSS selector to match an element
   --wait-for-timeout <seconds>      Selector timeout (default: 30)
+  --capture-timeout <seconds>       Total capture timeout (default and maximum: 60)
   --show-browser                   Show browser window (visible mode)
   --mobile                         Use mobile viewport (375x667 - iPhone)
   --tablet                         Use tablet viewport (768x1024 - iPad portrait)

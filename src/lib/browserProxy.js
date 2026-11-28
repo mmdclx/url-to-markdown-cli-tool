@@ -118,9 +118,11 @@ async function connectTunnel(request, client, head, privateOrigin) {
     });
 }
 
-async function startBrowserProxy(url, allowPrivateNetwork) {
+async function startBrowserProxy(url, allowPrivateNetwork, signal) {
+    signal?.throwIfAborted();
     const privateOrigin = allowPrivateNetwork ? url.origin : undefined;
     await destinationFor(url, privateOrigin);
+    signal?.throwIfAborted();
 
     // Check each connection at the proxy so redirects, frames and worker requests share the policy.
     const clients = new Set();
@@ -137,17 +139,23 @@ async function startBrowserProxy(url, allowPrivateNetwork) {
     server.on('connect', (request, client, head) => {
         connectTunnel(request, client, head, privateOrigin).catch(() => client.destroy());
     });
-    server.listen(0, '127.0.0.1');
-    await once(server, 'listening');
+    const close = () => new Promise((resolve) => {
+        server.close(resolve);
+        for (const client of clients) {
+            client.destroy();
+        }
+    });
+    server.listen({ port: 0, host: '127.0.0.1' });
+    try {
+        await once(server, 'listening', { signal });
+    } catch (error) {
+        await close();
+        throw error;
+    }
 
     return {
         endpoint: `http://127.0.0.1:${server.address().port}`,
-        close: () => new Promise((resolve) => {
-            server.close(resolve);
-            for (const client of clients) {
-                client.destroy();
-            }
-        })
+        close
     };
 }
 

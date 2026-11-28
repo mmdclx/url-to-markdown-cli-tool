@@ -5,8 +5,11 @@
  * Originally inspired by m92vyas/llm-reader.
  */
 
+const { setTimeout: delay } = require('node:timers/promises');
 const puppeteer = require('puppeteer');
 const { parseWebUrl, startBrowserProxy } = require('./browserProxy');
+
+const MAX_CAPTURE_SECONDS = 60;
 
 function throwForHttpError(response) {
     const status = response?.status();
@@ -23,6 +26,7 @@ function throwForHttpError(response) {
  * @param {number} [options.wait] - Extra delay before checking page readiness (seconds)
  * @param {string} [options.waitFor] - CSS selector that must match before capture
  * @param {number} [options.waitForTimeout=30] - Maximum time to wait for a selector (seconds)
+ * @param {number} [options.captureTimeout=60] - Total page capture deadline (seconds, up to 60)
  * @param {boolean} [options.headless=true] - Use headless browser or not
  * @param {string} [options.userAgent] - User agent string for the browser
  * @param {boolean} [options.showBrowser=false] - Show browser window (opposite of headless)
@@ -37,6 +41,7 @@ async function fetchPage(url, options = {}) {
         waitFor,
         wait = waitFor ? 0 : 1.5,
         waitForTimeout = 30,
+        captureTimeout = MAX_CAPTURE_SECONDS,
         headless = true,
         showBrowser = false,
         allowPrivateNetwork = false,
@@ -53,15 +58,33 @@ async function fetchPage(url, options = {}) {
         throw new Error('Viewport height must be between 568 and 1080 pixels');
     }
 
+    if (!Number.isFinite(captureTimeout) || captureTimeout <= 0 || captureTimeout > MAX_CAPTURE_SECONDS) {
+        throw new Error(`Capture timeout must be greater than zero and at most ${MAX_CAPTURE_SECONDS} seconds`);
+    }
+
     // showBrowser overrides headless setting
     const isHeadless = showBrowser ? false : headless;
 
     const targetUrl = parseWebUrl(url);
-    const proxy = await startBrowserProxy(targetUrl, allowPrivateNetwork);
+    const controller = new AbortController();
+    const { signal } = controller;
+    let timer;
+    const deadline = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+            const error = new Error(`Capture timed out after ${captureTimeout}s`);
+            reject(error);
+            controller.abort(error);
+        }, captureTimeout * 1000);
+    });
+
+    let proxy;
     let browser;
-    try {
+    const capture = async () => {
+        proxy = await startBrowserProxy(targetUrl, allowPrivateNetwork, signal);
+        signal.throwIfAborted();
         browser = await puppeteer.launch({
             headless: isHeadless,
+            signal,
             pipe: true,
             downloadBehavior: { policy: 'deny' },
             allowlist: [
@@ -77,6 +100,7 @@ async function fetchPage(url, options = {}) {
                 '--force-webrtc-ip-handling-policy=disable_non_proxied_udp'
             ]
         });
+        signal.throwIfAborted();
 
         const page = await browser.newPage();
         
@@ -99,7 +123,8 @@ async function fetchPage(url, options = {}) {
         try {
             await page.goto(targetUrl.href, {
                 waitUntil: 'domcontentloaded',
-                timeout: 30000
+                timeout: 30000,
+                signal
             });
         } finally {
             throwForHttpError(documentResponse);
@@ -107,17 +132,18 @@ async function fetchPage(url, options = {}) {
         
         // Wait for the specified time (equivalent to Python's implicit wait)
         if (wait > 0) {
-            await new Promise(resolve => setTimeout(resolve, wait * 1000));
+            await delay(Math.min(wait, captureTimeout) * 1000, undefined, { signal });
         }
         
         if (waitFor) {
             try {
                 await page.waitForFunction(
                     selector => document.querySelector(selector) !== null,
-                    { timeout: waitForTimeout * 1000 },
+                    { timeout: Math.min(waitForTimeout, captureTimeout) * 1000, signal },
                     waitFor
                 );
             } catch (error) {
+                signal.throwIfAborted();
                 throwForHttpError(documentResponse);
                 if (error instanceof puppeteer.TimeoutError) {
                     throw new Error(`Timed out after ${waitForTimeout}s waiting for CSS selector ${JSON.stringify(waitFor)}`);
@@ -128,9 +154,11 @@ async function fetchPage(url, options = {}) {
             try {
                 await page.waitForFunction(
                     () => document.readyState === 'complete',
-                    { timeout: Math.max(wait * 1000, 5000) }
+                    { timeout: Math.min(Math.max(wait, 5), captureTimeout) * 1000, signal }
                 );
-            } catch (timeoutError) {
+            } catch (error) {
+                signal.throwIfAborted();
+                if (!(error instanceof puppeteer.TimeoutError)) throw error;
                 console.warn('Page load timeout, continuing with partial content');
             }
         }
@@ -147,14 +175,24 @@ async function fetchPage(url, options = {}) {
         });
         throwForHttpError(documentResponse);
         return captured;
+    };
 
+    try {
+        return await Promise.race([capture(), deadline]);
     } catch (error) {
-        throw new Error(`Error while fetching page: ${error.message}`, { cause: error });
+        const cause = signal.reason ?? error;
+        throw new Error(`Error while fetching page: ${cause.message}`, { cause });
     } finally {
         try {
             await browser?.close();
+        } catch (error) {
+            if (!signal.aborted) throw error;
         } finally {
-            await proxy.close();
+            try {
+                await proxy?.close();
+            } finally {
+                clearTimeout(timer);
+            }
         }
     }
 }
@@ -165,5 +203,6 @@ async function getPageSource(url, options) {
 
 module.exports = {
     fetchPage,
-    getPageSource
+    getPageSource,
+    MAX_CAPTURE_SECONDS
 };
