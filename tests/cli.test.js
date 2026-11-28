@@ -39,6 +39,12 @@ const fixtureServer = createServer((request, response) => {
     response.end(`<main></main><script>setTimeout(() => {
       document.querySelector('main').innerHTML = '<h1 id="loaded">Dynamic content</h1>';
     }, 250)</script>`);
+  } else if (request.url === '/large-html' || request.url === '/large-multibyte-html') {
+    response.setHeader('Content-Type', 'text/html; charset=utf-8');
+    const [character, count] = request.url === '/large-html' ? ['a', 6] : ['雪', 2];
+    response.end(`<h1>Large page</h1><template></template><script>
+      document.querySelector('template').content.textContent = '${character}'.repeat(${count} * 1024 * 1024);
+    </script>`);
   } else if (request.url === '/subresources') {
     response.setHeader('Content-Type', 'text/html');
     response.end(`<h1>Fixture</h1><img src="${restrictedOrigin}"><script src="/fixture.js"></script>`);
@@ -191,6 +197,14 @@ test('releases a batch worker when the total capture deadline expires', async ()
     { line: 1, url: slowUrl, ok: false, error: expect.stringContaining('Capture timed out after 3s') },
     { line: 2, url: readyUrl, ok: true, markdown: '# Dynamic content' }
   ]);
+}, 12000);
+
+test.each(['/large-html', '/large-multibyte-html'])('rejects oversized captured HTML at %s', async (pathname) => {
+  const result = await runFixtureCli([], pathname);
+
+  expect(result.code).toBe(1);
+  expect(result.stderr).toContain('Captured HTML exceeds the 5 MiB limit');
+  expect(result.stdout).toBe('');
 }, 12000);
 
 describe('Content selection', () => {

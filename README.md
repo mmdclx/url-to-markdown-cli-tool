@@ -98,6 +98,8 @@ Choose one of `--article`, `--select`, or `--include-tags` for each run. The rem
 
 Each URL has a 60-second capture deadline covering DNS, browser startup, navigation, waits, and HTML capture. Use `--capture-timeout` to set a shorter deadline in seconds. A deadline failure in batch mode appears in that URL's result.
 
+Captured HTML is limited to 5 MiB in UTF-8 before Markdown conversion. An oversized page returns an error for that URL.
+
 ```bash
 url-to-md https://example.com/guide \
   --wait-for 'article.post' --wait-for-timeout 15 --article

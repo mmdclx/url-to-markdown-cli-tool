@@ -8,6 +8,7 @@
 const { setTimeout: delay } = require('node:timers/promises');
 const puppeteer = require('puppeteer');
 const { parseWebUrl, startBrowserProxy } = require('./browserProxy');
+const { captureDocument } = require('./captureDocument');
 
 const MAX_CAPTURE_SECONDS = 60;
 
@@ -165,14 +166,7 @@ async function fetchPage(url, options = {}) {
         
         // A client-side redirect can replace the main document while the page loads.
         throwForHttpError(documentResponse);
-        const captured = await page.evaluate(() => {
-            const serializer = new XMLSerializer();
-            let html = '';
-            for (const node of document.childNodes) {
-                html += node === document.documentElement ? node.outerHTML : serializer.serializeToString(node);
-            }
-            return { html, baseUrl: document.baseURI };
-        });
+        const captured = await captureDocument(page);
         throwForHttpError(documentResponse);
         return captured;
     };
