@@ -9,12 +9,20 @@ const cheerio = require('cheerio');
 const TurndownService = require('turndown');
 const { URL } = require('url');
 
-function resolveUrl(value, baseUrl) {
+const IMAGE_SCHEMES = new Set(['http:', 'https:']);
+const LINK_SCHEMES = new Set([...IMAGE_SCHEMES, 'mailto:', 'tel:']);
+
+function resolveAllowedUrl(value, baseUrl, allowedSchemes) {
+    let url;
     try {
-        return new URL(value, baseUrl).href;
+        url = new URL(value, baseUrl);
     } catch {
-        return value;
+        return null;
     }
+    if (!allowedSchemes.has(url.protocol)) return null;
+
+    // Keep characters that can delimit Markdown destinations percent-encoded.
+    return url.href.replace(/[\s<>\\]/g, encodeURIComponent);
 }
 
 function backtickFence(code, minimum) {
@@ -193,9 +201,12 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
             const src = image.attr('src');
             if (!keepImages || imageTypesToRemove.some(type => src?.includes(type))) {
                 image.remove();
-            } else if (src) {
-                image.attr('src', resolveUrl(src, baseUrl));
+                return;
             }
+
+            const destination = src?.trim() && resolveAllowedUrl(src, baseUrl, IMAGE_SCHEMES);
+            if (destination) image.attr('src', destination);
+            else image.remove();
         });
 
         $('a').each((index, element) => {
@@ -204,7 +215,9 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
             if (!keepWebpageLinks) {
                 link.replaceWith(link.contents());
             } else if (href !== undefined) {
-                link.attr('href', resolveUrl(href, baseUrl));
+                const destination = resolveAllowedUrl(href, baseUrl, LINK_SCHEMES);
+                if (destination) link.attr('href', destination);
+                else link.removeAttr('href');
             }
         });
 
@@ -262,6 +275,8 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
                 return node.isBlock ? '\n\n' : '';
             }
         });
+        const escapeText = turndownService.escape.bind(turndownService);
+        turndownService.escape = value => escapeText(value).replace(/</g, '\\<');
 
         turndownService.addRule('preformattedBlock', { filter: 'pre', replacement: renderCodeBlock });
         turndownService.addRule('inlineCode', { filter: 'code', replacement: renderInlineCode });
@@ -318,7 +333,7 @@ async function getProcessedMarkdown(pageSource, baseUrl, options = {}) {
                     const caption = node.querySelector('caption');
                     let captionText = '';
                     if (caption) {
-                        captionText = caption.textContent.trim();
+                        captionText = turndownService.escape(caption.textContent.trim());
                     }
                     
                     // Extract all rows

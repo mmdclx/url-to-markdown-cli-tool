@@ -141,6 +141,9 @@ url-to-md https://news-site.com \
 ```
 
 ### Content Filtering
+
+Markdown links can use HTTP, HTTPS, `mailto:`, or `tel:`. Images can use HTTP or HTTPS. Relative destinations are resolved first. Unsupported or invalid links keep their labels, and unsupported or invalid image sources are dropped.
+
 ```bash
 # Smart content cleaning - removes nav, footer, aside, script, style, header, noscript, canvas
 url-to-md https://blog.example.com --clean-content -o clean-blog.md
